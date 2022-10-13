@@ -309,7 +309,7 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
         $deploy['commonName'] = $conf ['f'] ?? 'mySelf'; //公共名称
         $deploy['emailAddress'] = $conf ['g'] ?? 'domain@domain.com'; //邮箱
         $config ['private_key_bits'] = $bits;
-        $config ['config'] = __DIR__ . '/../file/openssl.cnf';
+        $config ['config'] = __DIR__ . '/../../file/openssl.cnf';
         $res = \openssl_pkey_new($config);
         $csr = \openssl_csr_sign(\openssl_csr_new($deploy, $res, $config), null, $res, $valid, $config);
         \openssl_x509_export($csr, $cer);
