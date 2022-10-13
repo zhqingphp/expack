@@ -1,0 +1,32 @@
+{
+  "name": "zhqingphp/expack",
+  "description": "zhqingphp扩展包",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=8.0",
+    "phpoffice/phpspreadsheet": "^1.25",
+    "chillerlan/php-qrcode": "^4.3",
+    "phpmailer/phpmailer": "^6.6",
+    "textalk/websocket": "^1.5",
+    "chen-see/chen-pay": "^1.5",
+    "workerman/workerman": "^4.1",
+    "workerman/gateway-worker": "^4.0",
+    "workerman/phpsocket.io": "^1.1",
+    "workerman/globaldata": "^1.0",
+    "topthink/think-orm": "^2.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "zhqing\\": "src/"
+    },
+    "files": [
+      "src/function.php"
+    ]
+  },
+  "authors": [
+    {
+      "name": "zhqing",
+      "email": "9740878@qq.com"
+    }
+  ]
+}
