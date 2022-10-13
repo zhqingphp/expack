@@ -457,7 +457,16 @@ class Curl {
      * @return string
      */
     public function type(): string {
-        return explode(';', $this->info('content_type'))[0];
+        $data = explode(';', $this->info('content_type'));
+        return ($data[0] ?? '');
+    }
+
+    /**
+     * @return string
+     */
+    public function dis(): string {
+        $data = $this->header('Content-Disposition');
+        return ($data[key($data)] ?? '');
     }
 
     /**
