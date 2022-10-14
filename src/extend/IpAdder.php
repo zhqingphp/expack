@@ -3,7 +3,6 @@
 namespace zhqing\extend;
 
 class IpAdder {
-    private static mixed $self;
     private static string $BasePath = __DIR__ . "/../../file/qqwry.dat";
     private int $FirstIp;
     private int $TotalIp;
@@ -18,10 +17,7 @@ class IpAdder {
     public static function getAdder(string $ip = ''): string {
         if (preg_match("/^[\d]+\.[\d]+\.[\d]+\.[\d]+$/isU", $ip)) {
             return Frame::tryCatch(function () use ($ip) {
-                if (empty(self::$self)) {
-                    self::$self = (new self());
-                }
-                $local = self::$self->getLocal($ip);
+                $local = (new self())->getLocal($ip);
                 $area = trim(iconv("gb2312", "utf-8//IGNORE", $local['area']));
                 $operators = trim(iconv("gb2312", "utf-8//IGNORE", $local['operators']));
                 $area = $area == "CZ88.NET" ? "unknown" : $area;
