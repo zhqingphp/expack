@@ -15,11 +15,11 @@ function es(mixed $data = null, int $row = 30, int $cols = 200) {
     return '<textarea rows="' . $row . '" cols="' . $cols . '">' . $data . '</textarea>';
 }
 
-function load($title, $url, $time = 15) {
+function loadJump($title, $url, $time = 15) {
     require __DIR__ . '/../file/load.php';
 }
 
-function error() {
+function workError() {
     $html = '<html><head><title>404 Not Found</title></head><body><center><h1>404 Not Found</h1></center><hr></body></html>';
     return response($html, 404);
 }
