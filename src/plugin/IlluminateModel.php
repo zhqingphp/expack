@@ -11,7 +11,7 @@ use think\facade\Db;
 
 trait IlluminateModel {
 
-    public function find($columns = ['*']) {
+    public function getFind($columns = ['*']) {
         return !empty($obj = $this->first($columns)) ? $obj->toArray() : [];
     }
 }
