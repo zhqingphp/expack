@@ -454,11 +454,16 @@ class Curl {
 
     /**
      * 获取mime类型
+     * @param string $default
      * @return string
      */
-    public function type(): string {
-        $data = explode(';', $this->info('content_type'));
-        return ($data[0] ?? '');
+    public function type(string $default = ''): string {
+        $type = $this->info('content_type');
+        if (!empty($type)) {
+            $data = explode(';', $this->info('content_type'));
+            $default = ($data[0] ?? '');
+        }
+        return $default;
     }
 
     /**
