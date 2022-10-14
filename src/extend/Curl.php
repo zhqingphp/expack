@@ -414,7 +414,7 @@ class Curl {
     public function header(mixed $key = null, mixed $default = null): mixed {
         $handle = function ($key, $default) {
             \preg_match_all("/" . $key . ":(.*?)\r\n/i", $this->header, $arr);
-            return isset($arr[1]) ? trim($arr[1]) : $default;
+            return $arr[1] ?? $default;
         };
         return isset($key) ? $handle($key, $default) : $this->header;
     }
