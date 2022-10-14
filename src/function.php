@@ -23,3 +23,7 @@ function workError() {
     $html = '<html><head><title>404 Not Found</title></head><body><center><h1>404 Not Found</h1></center><hr></body></html>';
     return response($html, 404);
 }
+
+function toArr($data) {
+    return !empty($data) ? $data->toArray() : [];
+}
