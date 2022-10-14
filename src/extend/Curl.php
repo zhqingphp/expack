@@ -460,7 +460,7 @@ class Curl {
     public function type(string $default = ''): string {
         $type = $this->info('content_type');
         if (!empty($type)) {
-            $data = explode(';', $this->info('content_type'));
+            $data = explode(';', $type);
             $default = ($data[0] ?? '');
         }
         return $default;
