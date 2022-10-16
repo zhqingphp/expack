@@ -425,7 +425,7 @@ class Curl {
      * @return mixed
      */
     public function getCookie(array $cookie = []): mixed {
-        preg_match_all("/set-cookie:(.*?)\; path/i", $this->header, $arr);
+        preg_match_all("/set-cookie:(.*?)(; path|\r\n)/i", $this->header, $arr);
         $cookieArr = $arr[1] ?? [];
         foreach ($cookieArr as $v) {
             $k = explode('=', $v);
