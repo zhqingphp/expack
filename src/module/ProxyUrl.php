@@ -22,15 +22,14 @@ class ProxyUrl {
             ->exec();
         if ($curl->code() == 200) {
             $header = $curl->getHeadArr(['Content-Type', 'Content-Disposition']);
-            $getCookie = $curl->getCookie();
-            $body = $curl->body();
             foreach ($header as $k => $v) {
                 header($k . ':' . $v);
             }
+            $getCookie = $curl->getCookie();
             foreach ($getCookie as $k => $v) {
                 Cookie::set($k, $v);
             }
-            echo $body;
+            echo $curl->body();
         } else {
             Response::status(404);
             echo '404 Not Found';
