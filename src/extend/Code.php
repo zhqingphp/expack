@@ -33,10 +33,11 @@ class Code {
             $widths += 10;
         }
         return [
-            $code, Frame::obCache(function () use ($img) {
-                imagepng($img);
-                imagedestroy($img);
-            })
+            'code' => $code,
+            'img' => 'data:image/png;base64,' . base64_encode(Frame::obCache(function () use ($img) {
+                    imagepng($img);
+                    imagedestroy($img);
+                }))
         ];
     }
 
@@ -73,11 +74,11 @@ class Code {
             imagettftext($img, $fontSize, mt_rand(-30, 30), $x * $i + mt_rand(1, 5), $height / 1.4, $fontcolor, $font, $code [$i]);
         }
         return [
-            $code,
-            Frame::obCache(function () use ($img) {
-                imagepng($img);
-                imagedestroy($img);
-            })
+            'code' => $code,
+            'img' => 'data:image/png;base64,' . base64_encode(Frame::obCache(function () use ($img) {
+                    imagepng($img);
+                    imagedestroy($img);
+                }))
         ];
     }
 }

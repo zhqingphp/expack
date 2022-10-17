@@ -384,4 +384,121 @@ class Frame {
         \parse_str($query, $data);
         return $data;
     }
+
+    /**
+     * 金额转汉字
+     * @param $amount
+     * @return string
+     */
+    public static function rmbToStr($amount): string {
+        $capitalNumbers = [
+            '零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖',
+        ];
+        $integerUnits = ['', '拾', '佰', '仟',];
+        $placeUnits = ['', '万', '亿', '兆',];
+        $decimalUnits = ['角', '分', '厘', '毫',];
+        $result = [];
+        $arr = explode('.', (string)$amount);
+        $integer = trim($arr[0] ?? '', '-');
+        $decimal = $arr[1] ?? '';
+        if (!((int)$decimal)) {
+            $decimal = '';
+        }
+        // 转换整数部分
+        // 从个位开始
+        $integerNumbers = $integer ? array_reverse(str_split($integer)) : [];
+        $last = null;
+        foreach (array_chunk($integerNumbers, 4) as $chunkKey => $chunk) {
+            if (!((int)implode('', $chunk))) {
+                // 全是 0 则直接跳过
+                continue;
+            }
+            array_unshift($result, $placeUnits[$chunkKey]);
+            foreach ($chunk as $key => $number) {
+                // 去除重复 零，以及第一位的 零，类似：1002、110
+                if (!$number && (!$last || $key === 0)) {
+                    $last = $number;
+                    continue;
+                }
+                $last = $number;
+                // 类似 1022，中间的 0 是不需要 佰 的
+                if ($number) {
+                    array_unshift($result, $integerUnits[$key]);
+                }
+                array_unshift($result, $capitalNumbers[$number]);
+            }
+        }
+        if (!$result) {
+            $result[] = $capitalNumbers[0];
+        }
+        $result[] = '圆';
+        if (!$decimal) {
+            $result[] = '整';
+        }
+        // 转换小数位
+        $decimalNumbers = $decimal ? str_split($decimal) : [];
+        foreach ($decimalNumbers as $key => $number) {
+            $result[] = $capitalNumbers[$number];
+            $result[] = $decimalUnits[$key];
+        }
+        if (str_starts_with((string)$amount, '-')) {
+            array_unshift($result, '负');
+        }
+        return implode('', $result);
+    }
+
+    /**
+     * 据传入的经纬度，和距离范围，返回所在距离范围内的经纬度的取值范围
+     * @param $lng
+     * @param $lat
+     * @param float $distance 单位：km
+     * @return array
+     */
+    public static function locationRange($lng, $lat, $distance = 2): array {
+        $earthRadius = 6378.137;//单位km
+        $d_lng = rad2deg(2 * asin(sin($distance / (2 * $earthRadius)) / cos(deg2rad($lat))));
+        $d_lat = rad2deg($distance / $earthRadius);
+        return array(
+            'lat_start' => round($lat - $d_lat, 7),//纬度开始
+            'lat_end' => round($lat + $d_lat, 7),//纬度结束
+            'lng_start' => round($lng - $d_lng, 7),//纬度开始
+            'lng_end' => round($lng + $d_lng, 7)//纬度结束
+        );
+    }
+
+    /**
+     * 根据经纬度返回距离
+     * @param $lng1 //经度
+     * @param $lat1 //纬度
+     * @param $lng2 //经度
+     * @param $lat2 //纬度
+     * @return float 距离：m
+     */
+    public static function getDistance($lng1, $lat1, $lng2, $lat2): float {
+        $radLat1 = deg2rad($lat1);//deg2rad()函数将角度转换为弧度
+        $radLat2 = deg2rad($lat2);
+        $radLng1 = deg2rad($lng1);
+        $radLng2 = deg2rad($lng2);
+        $a = $radLat1 - $radLat2;
+        $b = $radLng1 - $radLng2;
+        $s = 2 * asin(sqrt(pow(sin($a / 2), 2) + cos($radLat1) * cos($radLat2) * pow(sin($b / 2), 2))) * 6370996;
+        return round($s, 0);
+    }
+
+    /**
+     *  根据经纬度返回距离
+     * @param $lng1 //经度
+     * @param $lat1 //纬度
+     * @param $lng2 //经度
+     * @param $lat2 //纬度
+     * @return string 距离：km,m
+     */
+    public static function distance($lng1, $lat1, $lng2, $lat2): string {
+        $m = self::getDistance($lng1, $lat1, $lng2, $lat2);
+        if ($m > 1000) {
+            return round($m / 1000, 1) . 'km';
+        } else {
+            return $m . 'm';
+        }
+    }
 }
