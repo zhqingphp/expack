@@ -46,7 +46,7 @@ class Frame {
     }
 
     /**
-     * 金额转换
+     *
      * 转换回来第三个为空
      * @param $int
      * @param int $decimals
@@ -56,6 +56,15 @@ class Frame {
      */
     public static function money($int, int $decimals = 2, string $thousands = ',', string $separator = '.'): string {
         return number_format($int, $decimals, $separator, $thousands);
+    }
+
+    /**
+     * 金额转换
+     * @param $data
+     * @return float
+     */
+    public static function strToInt($data): float {
+        return floatval(preg_replace('/[^\\d.]/', '', $data));
     }
 
     /**
