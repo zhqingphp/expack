@@ -64,7 +64,7 @@ class Frame {
      * @return float
      */
     public static function strToInt($data): float {
-        return floatval(preg_replace('/[^\\d.]/', '', $data));
+        return floatval(preg_replace('/[^(\-\d).]/', '', $data));
     }
 
     /**
