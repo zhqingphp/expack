@@ -424,13 +424,13 @@ class Curl {
      * @param array $arr //包含的名称(不分大小写)
      * @return array
      */
-    public function getHeadArr(array $head): array {
-        preg_match_all("/(.*?):(.*?)\r\n/i", $this->header, $arr);
+    public function getHeadArr(array $head = []): array {
+        preg_match_all("/(.*?):(.*?)\r\n/i", $this->header . "\r\n", $arr);
         $array = [];
         $keyArr = $arr[1] ?? [];
-        $head = array_map('strtolower', $head);
+        $head = $head ? array_map('strtolower', $head) : [];
         foreach ($keyArr as $k => $v) {
-            if (!empty($key = trim($v)) && !empty(in_array(strtolower($key), $head)) && !empty($val = trim($arr[2][$k] ?? ''))) {
+            if ((!empty($key = trim($v)) && !empty($val = trim($arr[2][$k] ?? ''))) && (empty($head) || !empty(in_array(strtolower($key), $head)))) {
                 $array[$key] = $val;
             }
         }
