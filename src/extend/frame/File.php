@@ -5,8 +5,6 @@ namespace zhqing\extend\frame;
 use Generator;
 
 trait File {
-
-
     /**
      * 删除 PHP 注释以及空白字符
      * @param string $file
@@ -143,17 +141,17 @@ trait File {
     /**
      * 删除其文件夹下所有指定格式文件(文件夹，格式)
      * @param $dir
-     * @param $format
+     * @param string $format (为空删除全部)
      */
-    public static function delDirFile($dir, $format) {
+    public static function delDirFile($dir, string $format = '') {
         if (\file_exists($dir)) {
             $fp = \opendir($dir);
             while ($file = \readdir($fp)) {
                 if ($file != "." && $file != "..") {
                     $files = $dir . "/" . $file;
                     if (!\is_dir($files)) {
-                        if ((\substr(\strrchr($files, '.'), 1) == $format)) {
-                            \unlink($files);
+                        if (empty($format) || (\substr(\strrchr($files, '.'), 1) == $format)) {
+                            @unlink($files);
                         }
                     } else {
                         if (\is_dir($files)) {

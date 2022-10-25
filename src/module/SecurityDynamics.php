@@ -2,7 +2,7 @@
 
 namespace zhqing\module;
 
-use zhqing\extend\Ciphertext;
+use zhqing\extend\Safe;
 use zhqing\extend\Frame;
 
 /**
@@ -45,16 +45,16 @@ class SecurityDynamics {
         $info['time'] = time();
         $info['valid'] = $time;
         if (($keyArr[$keyField]['type'] ?? 'des') == 'des') {
-            $Encrypt = Ciphertext::desEncrypt(Frame::json($info), $key, $iv);
+            $Encrypt = Safe::desEncrypt(Frame::json($info), $key, $iv);
         } else {
-            $Encrypt = Ciphertext::aesEncrypt(Frame::json($info), $key, $iv);
+            $Encrypt = Safe::aesEncrypt(Frame::json($info), $key, $iv);
         }
         $random = Frame::randStr(32);
         $a = rand(0, 9);
         $b = rand(10, 16);
         $k = substr($random, $a, 16);
         $i = substr($random, $b, 16);
-        $EncryptData = Ciphertext::aesEncrypt($Encrypt, $k, $i);
+        $EncryptData = Safe::aesEncrypt($Encrypt, $k, $i);
         $rand = rand(0, strlen($EncryptData));
         return substr($EncryptData, 0, $rand) . (self::$RandStr[array_rand(self::$RandStr)]) . $b . $random . $a . (strlen($keyField) == 1 ? '0' . $keyField : $keyField) . $kRand . substr($EncryptData, $rand);
     }
@@ -70,12 +70,12 @@ class SecurityDynamics {
         $arr = explode('\@', $data);
         $end = end($arr);
         $random = substr($end, 2, 32);
-        $Decrypt = Ciphertext::aesDecrypt(Frame::strRep($data, '\@' . substr($end, 0, 38)), substr($random, substr($end, 34, 1), 16), substr($random, substr($end, 0, 2), 16));
+        $Decrypt = Safe::aesDecrypt(Frame::strRep($data, '\@' . substr($end, 0, 38)), substr($random, substr($end, 34, 1), 16), substr($random, substr($end, 0, 2), 16));
         if (!empty($keyArr = (self::$EncryptArr[((int)substr($end, 35, 2))] ?? []))) {
             if (($keyArr['type'] ?? 'des') == 'des') {
-                $Encrypt = Ciphertext::desDecrypt($Decrypt, (substr($keyArr['key'], 0, -1) . substr($end, 37, 1)), ($keyArr['iv'] ?? ''));
+                $Encrypt = Safe::desDecrypt($Decrypt, (substr($keyArr['key'], 0, -1) . substr($end, 37, 1)), ($keyArr['iv'] ?? ''));
             } else {
-                $Encrypt = Ciphertext::aesDecrypt($Decrypt, (substr($keyArr['key'], 0, -1) . substr($end, 37, 1)), ($keyArr['iv'] ?? ''));
+                $Encrypt = Safe::aesDecrypt($Decrypt, (substr($keyArr['key'], 0, -1) . substr($end, 37, 1)), ($keyArr['iv'] ?? ''));
             }
             $DataArr = Frame::isJson($Encrypt);
             if (!empty($time = ($DataArr['time'] ?? '')) && !empty($valid = ($DataArr['valid'] ?? '')) && (($time + $valid) <= time())) {

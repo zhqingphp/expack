@@ -1,7 +1,7 @@
 <?php
 
 namespace zhqing\extend;
-class Ciphertext {
+class Safe {
     //调试私钥
     public static string $private = '-----BEGIN PRIVATE KEY-----
 MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAOVvpzd7f4p3cg3k
@@ -28,7 +28,21 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
 -----END PUBLIC KEY-----';
 
     /**
-     * 解密
+     * aes动态加密
+     * @param $data
+     * @return array
+     */
+    public static function aesEn($data): array {
+        $rand = self::rand();
+        $iv = rand(1, 16);
+        return [
+            'random' => $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
+            'data' => self::aesEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr(md5($rand), $iv, 16))
+        ];
+    }
+
+    /**
+     * aes动态解密
      * @param $data
      * @param $random
      * @return string
@@ -38,7 +52,21 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
     }
 
     /**
-     * 解密
+     * des动态加密
+     * @param $data
+     * @return array
+     */
+    public static function desEn($data): array {
+        $rand = self::rand();
+        $iv = rand(1, 16);
+        return [
+            'random' => $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
+            'data' => self::desEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr(md5($rand), $iv, 24))
+        ];
+    }
+
+    /**
+     * des动态解密
      * @param $data
      * @param $random
      * @return string
@@ -48,13 +76,27 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
     }
 
     /**
-     * 解密
+     * des3动态加密
+     * @param $data
+     * @return array
+     */
+    public static function des3En($data): array {
+        $rand = self::rand();
+        $iv = rand(1, 16);
+        return [
+            'random' => $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
+            'data' => self::des3Encrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr(md5($rand), $iv, 24))
+        ];
+    }
+
+    /**
+     * des3动态解密
      * @param $data
      * @param $random
      * @return string
      */
-    public static function desDeg($data, $random): string {
-        return self::desDecoding($data, substr(md5(substr($random, 0, -2)), substr($random, -2), 24));
+    public static function des3De($data, $random): string {
+        return self::des3Decrypt($data, substr(md5(substr($random, 0, -2)), substr($random, -2), 24));
     }
 
     /**
@@ -90,13 +132,13 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
     }
 
     /**
-     * 3des加密
+     * des3加密
      * @param string $data
      * @param string $key //最长24位
      * @param string $iv //长度8位
      * @return string
      */
-    public static function desEncrypt(string $data, string $key, string $iv = ''): string {
+    public static function des3Encrypt(string $data, string $key, string $iv = ''): string {
         return (!empty($iv) && \strlen($iv) < 8) ? "iv length 8 bits" : (\base64_encode(\openssl_encrypt($data
             , (!empty($iv) ? "DES-EDE3-CBC" : "DES-EDE3")
             , (\strlen($key) > 24 ? \substr($key, 0, 24) : $key)
@@ -106,13 +148,13 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
     }
 
     /**
-     * 3des解密
+     * des3解密
      * @param string $data
      * @param string $key //最长24位
      * @param string $iv //长度8位
      * @return string
      */
-    public static function desDecrypt(string $data, string $key, string $iv = ''): string {
+    public static function des3Decrypt(string $data, string $key, string $iv = ''): string {
         return (!empty($iv) && \strlen($iv) < 8) ? "iv length 8 bits" : (\openssl_decrypt(\base64_decode($data)
             , (!empty($iv) ? "DES-EDE3-CBC" : "DES-EDE3")
             , (\strlen($key) > 24 ? \substr($key, 0, 24) : $key)
@@ -128,7 +170,7 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      * @param string $iv //长度8位
      * @return string
      */
-    public static function desEncryption(string $data, string $key, string $iv = ''): string {
+    public static function desEncrypt(string $data, string $key, string $iv = ''): string {
         return (!empty($iv) && \strlen($iv) < 8) ? "iv length 8 bits" : (\base64_encode(\openssl_encrypt($data
             , (!empty($iv) ? "DES-CBC" : "DES-ECB")
             , (\strlen($key) > 24 ? \substr($key, 0, 24) : $key)
@@ -144,7 +186,7 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      * @param string $iv //长度8位
      * @return string
      */
-    public static function desDecoding(string $data, string $key, string $iv = ''): string {
+    public static function desDecrypt(string $data, string $key, string $iv = ''): string {
         return (!empty($iv) && \strlen($iv) < 8) ? "iv length 8 bits" : (\openssl_decrypt(\base64_decode($data)
             , (!empty($iv) ? "DES-CBC" : "DES-ECB")
             , (\strlen($key) > 24 ? \substr($key, 0, 24) : $key)
@@ -317,5 +359,14 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
         $data ['cer'] = $cer; // 生成证书
         $data ['pfx'] = $pfx; // 密钥文件
         return $data;
+    }
+
+    /**
+     * 生成随机
+     * @param int $length
+     * @return string
+     */
+    public static function rand(int $length = 32): string {
+        return substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'), 0, $length);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace zhqing\extend;
 
+use zhqing\extend\frame\NewWay;
 use zhqing\extend\frame\Decompression;
 use zhqing\extend\frame\Mime;
 use zhqing\extend\frame\Browser;
@@ -15,7 +16,7 @@ use zhqing\extend\frame\Xml;
 use zhqing\extend\frame\Tool;
 
 class Frame {
-    use Acme, File, Upload, Browser, Arrays, Decompression, Mime, Wait, Sort, Xml, Tool;
+    use Acme, File, Upload, Browser, Arrays, Decompression, Mime, Wait, Sort, Xml, Tool, NewWay;
 
     /**
      * 获取url详细
