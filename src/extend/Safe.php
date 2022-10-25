@@ -28,6 +28,36 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
 -----END PUBLIC KEY-----';
 
     /**
+     * 动态加密
+     * @param $data
+     * @return array
+     */
+    public static function movEn($data): array {
+        $type = rand(1, 3);
+        if ($type == 1) {
+            return self::aesEn($data);
+        } else if ($type == 2) {
+            return self::desEn($data);
+        }
+        return self::des3En($data);
+    }
+
+    /**
+     * @param $data
+     * @param $random
+     * @return string
+     */
+    public static function movDe($data, $random): string {
+        $type = substr($random, 0, 1);
+        if ($type == 1) {
+            return self::aesDe($data, $random);
+        } else if ($type == 2) {
+            return self::desDe($data, $random);
+        }
+        return self::des3De($data, $random);
+    }
+
+    /**
      * aes动态加密
      * @param $data
      * @return array
@@ -35,21 +65,14 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
     public static function aesEn($data): array {
         $rand = self::rand();
         $iv = rand(1, 16);
+        $md5 = md5($rand);
+        $type = rand(1, 2);
         return [
-            'random' => $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
-            'data' => self::aesEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr(md5($rand), $iv, 16))
+            'random' => '1' . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
+            'data' => self::aesEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 16), ($type == 2 ? substr(md5($md5), $iv, 16) : ''))
         ];
     }
 
-    /**
-     * aes动态解密
-     * @param $data
-     * @param $random
-     * @return string
-     */
-    public static function aesDe($data, $random): string {
-        return self::aesDecrypt($data, substr(md5(substr($random, 0, -2)), substr($random, -2), 16));
-    }
 
     /**
      * des动态加密
@@ -58,21 +81,13 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      */
     public static function desEn($data): array {
         $rand = self::rand();
-        $iv = rand(1, 16);
+        $iv = rand(1, 8);
+        $md5 = md5($rand);
+        $type = rand(1, 2);
         return [
-            'random' => $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
-            'data' => self::desEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr(md5($rand), $iv, 24))
+            'random' => '2' . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
+            'data' => self::desEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''))
         ];
-    }
-
-    /**
-     * des动态解密
-     * @param $data
-     * @param $random
-     * @return string
-     */
-    public static function desDe($data, $random): string {
-        return self::desDecrypt($data, substr(md5(substr($random, 0, -2)), substr($random, -2), 24));
     }
 
     /**
@@ -82,12 +97,42 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      */
     public static function des3En($data): array {
         $rand = self::rand();
-        $iv = rand(1, 16);
+        $iv = rand(1, 8);
+        $md5 = md5($rand);
+        $type = rand(1, 2);
         return [
-            'random' => $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
-            'data' => self::des3Encrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr(md5($rand), $iv, 24))
+            'random' => '3' . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
+            'data' => self::des3Encrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''))
         ];
     }
+
+
+    /**
+     * aes动态解密
+     * @param $data
+     * @param $random
+     * @return string
+     */
+    public static function aesDe($data, $random): string {
+        $md5 = md5(substr($random, 2, strlen($random) - 4));
+        $iv = substr($random, -2);
+        $type = substr($random, 1, 1);
+        return self::aesDecrypt($data, substr($md5, $iv, 16), ($type == 2 ? substr(md5($md5), $iv, 16) : ''));
+    }
+
+    /**
+     * des动态解密
+     * @param $data
+     * @param $random
+     * @return string
+     */
+    public static function desDe($data, $random): string {
+        $md5 = md5(substr($random, 2, strlen($random) - 4));
+        $iv = substr($random, -2);
+        $type = substr($random, 1, 1);
+        return self::desDecrypt($data, substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''));
+    }
+
 
     /**
      * des3动态解密
@@ -96,7 +141,10 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      * @return string
      */
     public static function des3De($data, $random): string {
-        return self::des3Decrypt($data, substr(md5(substr($random, 0, -2)), substr($random, -2), 24));
+        $md5 = md5(substr($random, 2, strlen($random) - 4));
+        $iv = substr($random, -2);
+        $type = substr($random, 1, 1);
+        return self::des3Decrypt($data, substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''));
     }
 
     /**
