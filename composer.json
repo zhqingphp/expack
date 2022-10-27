@@ -7,8 +7,7 @@
     "phpoffice/phpspreadsheet": "^1.25",
     "chillerlan/php-qrcode": "^4.3",
     "phpmailer/phpmailer": "^6.6",
-    "textalk/websocket": "^1.5",
-    "chen-see/chen-pay": "^1.5"
+    "textalk/websocket": "^1.5"
   },
   "autoload": {
     "psr-4": {
