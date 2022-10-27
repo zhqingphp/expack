@@ -10,7 +10,7 @@ if (!function_exists('ts')) {
         echo '<textarea rows="' . $row . '" cols="' . $cols . '">' . $data . '</textarea>';
     }
 }
-if (!function_exists('rs') && function_exists('response')) {
+if (!function_exists('rs')) {
     function rs($data) {
         return response('<pre>' . print_r($data, true) . '</pre>');
     }
@@ -28,7 +28,7 @@ if (!function_exists('loadJump')) {
     }
 
 }
-if (!function_exists('workError') && function_exists('response')) {
+if (!function_exists('workError')) {
     function workError() {
         $html = '<html><head><title>404 Not Found</title></head><body><center><h1>404 Not Found</h1></center><hr></body></html>';
         return response($html, 404);
