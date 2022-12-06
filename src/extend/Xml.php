@@ -7,6 +7,17 @@ use DOMDocument;
 class Xml {
 
     /**
+     * 获取Xml内容
+     * @param $arr
+     * @param $key
+     * @param $default
+     * @return mixed
+     */
+    public static function get($arr, $key, $default = null): mixed {
+        return (!empty($data = ($arr['data'][$key]['data'] ?? $default)) ? $data : $default);
+    }
+
+    /**
      * 支持一级属性标签
      * Array转Xml
      * @param array $arr //array
