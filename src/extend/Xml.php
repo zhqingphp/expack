@@ -18,6 +18,33 @@ class Xml {
     }
 
     /**
+     * 简单转array
+     * @param string|array $xml
+     * @return mixed
+     */
+    public static function xmlToArr(string|array $xml): mixed {
+        return json_decode(json_encode(simplexml_load_string((is_array($xml) ? (@file_get_contents($xml[key($xml)])) : $xml), "SimpleXMLElement", LIBXML_NOCDATA)), true);
+    }
+
+    /**
+     * 简单转xml
+     * @param array $arr
+     * @param string $name
+     * @param string $version
+     * @param string $encoding
+     * @return string
+     */
+    public static function arrToXml(array $arr, string $name = "XmlName", string $version = "1.0", string $encoding = "UTF-8"): string {
+        $xml = "<?xml version=\"{$version}\" encoding=\"{$encoding}\"?>";
+        $xml .= "<{$name}>";
+        foreach ($arr as $k => $v) {
+            $xml .= "<{$k}>{$v}</{$k}>";
+        }
+        $xml .= "</{$name}>";
+        return $xml;
+    }
+
+    /**
      * 支持一级属性标签
      * Array转Xml
      * @param array $arr //array
