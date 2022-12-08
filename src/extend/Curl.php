@@ -331,7 +331,7 @@ class Curl {
             $this->curlInfo = curl_getinfo($curl);
             $this->header = trim(substr($content, 0, $this->curlInfo['header_size']), "\r\n\r\n");
             $this->body = substr($content, $this->curlInfo['header_size']);
-            if (empty($type) || $this->curlInfo['http_code'] == 200 && !empty($this->body)) {
+            if (empty($type) || ($this->curlInfo['http_code'] ?? 0) == 200) {
                 if (isset($this->setData['coding'])) {
                     $coding = $this->setData['coding'];
                     $this->body = mb_convert_encoding($this->body, $coding['to'], $coding['from']);

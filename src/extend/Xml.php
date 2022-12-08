@@ -23,7 +23,8 @@ class Xml {
      * @return mixed
      */
     public static function xmlToArr(string|array $xml): mixed {
-        return json_decode(json_encode(simplexml_load_string((is_array($xml) ? (@file_get_contents($xml[key($xml)])) : $xml), "SimpleXMLElement", LIBXML_NOCDATA)), true);
+        $xmlData = (is_array($xml) ? (@file_get_contents($xml[key($xml)])) : $xml);
+        return (str_starts_with($xmlData, '<?') ? json_decode(json_encode(simplexml_load_string($xmlData, "SimpleXMLElement", LIBXML_NOCDATA)), true) : []);
     }
 
     /**
@@ -37,8 +38,10 @@ class Xml {
     public static function arrToXml(array $arr, string $name = "XmlName", string $version = "1.0", string $encoding = "UTF-8"): string {
         $xml = "<?xml version=\"{$version}\" encoding=\"{$encoding}\"?>";
         $xml .= "<{$name}>";
-        foreach ($arr as $k => $v) {
-            $xml .= "<{$k}>{$v}</{$k}>";
+        if (!empty($arr)) {
+            foreach ($arr as $k => $v) {
+                $xml .= "<{$k}>{$v}</{$k}>";
+            }
         }
         $xml .= "</{$name}>";
         return $xml;
