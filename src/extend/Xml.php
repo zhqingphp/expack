@@ -18,6 +18,17 @@ class Xml {
     }
 
     /**
+     * 获取Xml内容
+     * @param $arr
+     * @param $key
+     * @param $default
+     * @return mixed
+     */
+    public static function getArr($arr, $key, $default = null): mixed {
+        return (!empty($data = ($arr['data'][$key]['data'][0] ?? $default)) ? $data : $default);
+    }
+
+    /**
      * 简单转array
      * @param string|array $xml
      * @return mixed
@@ -51,12 +62,12 @@ class Xml {
      * 支持一级属性标签
      * Array转Xml
      * @param array $arr //array
-     * @param string $name //根名称
+     * @param string|null $name //根名称
      * @param string $version //板本
      * @param string $encoding //编码
      * @return string
      */
-    public static function toXml(array $arr, string $name = "XmlName", string $version = "1.0", string $encoding = "UTF-8"): string {
+    public static function toXml(array $arr, string|null $name = "XmlName", string $version = "1.0", string $encoding = "UTF-8"): string {
         $tagFun = function ($arr, $str = '') {
             if (count($arr) > 0) {
                 foreach ($arr as $k => $v) {
@@ -68,10 +79,10 @@ class Xml {
         };
         $arr['tag']['version'] = ($arr['tag']['version'] ?? $version);
         $arr['tag']['encoding'] = ($arr['tag']['encoding'] ?? $encoding);
-        $xml = "<?xml" . ($tagFun($arr['tag'])) . "?>";
-        $xml .= "<" . ($arr['name'] ?? $name) . $tagFun(($arr['attr'] ?? [])) . ">";
+        $xml = (($name === null) ? "" : "<?xml" . ($tagFun($arr['tag'])) . "?>");
+        $xml .= (($name === null) ? "" : "<" . ($arr['name'] ?? $name) . $tagFun(($arr['attr'] ?? [])) . ">");
         $xml .= self::toXmlHandle(($arr['data'] ?? ''));
-        $xml .= "</" . ($arr['name'] ?? $name) . ">";
+        $xml .= (($name === null) ? "" : "</" . ($arr['name'] ?? $name) . ">");
         return $xml;
     }
 
