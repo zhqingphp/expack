@@ -319,11 +319,13 @@ class Curl {
     /**
      * 设置完成后处理
      * @param bool $type //是否执行多个域名
+     * @param mixed $success //成功时执行
+     * @param mixed $error //错误时执行
      * @return $this
      */
-    public function exec(bool $type = true): static {
+    public function exec(bool $type = true, mixed $success = null, mixed $error = null): static {
         $curl = curl_init();
-        $this->handleCurl()->handleReq(function ($url) use ($curl, $type) {
+        $this->handleCurl()->handleReq(function ($url) use ($curl, $type, $success, $error) {
             $this->setData['reqUrl'] = $url;
             $this->curlSet[CURLOPT_URL] = $url;
             curl_setopt_array($curl, $this->curlSet);
@@ -331,14 +333,20 @@ class Curl {
             $this->curlInfo = curl_getinfo($curl);
             $this->header = trim(substr($content, 0, $this->curlInfo['header_size']), "\r\n\r\n");
             $this->body = substr($content, $this->curlInfo['header_size']);
+            if (isset($this->setData['coding'])) {
+                $coding = $this->setData['coding'];
+                $this->body = mb_convert_encoding($this->body, $coding['to'], $coding['from']);
+            }
             if (empty($type) || ($this->curlInfo['http_code'] ?? 0) == 200) {
-                if (isset($this->setData['coding'])) {
-                    $coding = $this->setData['coding'];
-                    $this->body = mb_convert_encoding($this->body, $coding['to'], $coding['from']);
+                if (!empty($succes) && is_callable($succes)) {
+                    $success($this->setData);
                 }
                 return true;
             } else {
                 $this->body = $this->body ?: curl_error($curl);
+                if (!empty($succes) && is_callable($succes)) {
+                    $error($this->setData);
+                }
                 return false;
             }
         });
@@ -525,6 +533,7 @@ class Curl {
     public function getDomain(): array {
         return [$this->setData['domainId'] => $this->setData['domain']];
     }
+
 
     /**
      * @param $fun
