@@ -519,6 +519,14 @@ class Curl {
     }
 
     /**
+     * 获取请求域名参数
+     * @return array
+     */
+    public function getDomain(): array {
+        return [$this->setData['domainId'] => $this->setData['domain']];
+    }
+
+    /**
      * @param $fun
      * @return void
      */
@@ -526,9 +534,10 @@ class Curl {
         if (is_string($this->setData['url'])) {
             $this->setData['url'] = [$this->setData['url']];
         }
-        foreach ($this->setData['url'] as $v) {
+        foreach ($this->setData['url'] as $k => $v) {
             $v = trim($v, '/') . '/';
             $this->setData['domain'] = $v;
+            $this->setData['domainId'] = $k;
             $this->setData['path'] = $this->setData['path'] ?? '';
             $this->setData['path'] = ($this->setData['path'] ? ltrim($this->setData['path'], '/') : '');
             if ($this->setData['mode'] == 'GET') {
