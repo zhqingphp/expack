@@ -3,6 +3,7 @@
 namespace zhqing\workerman;
 
 use zhqing\extend\Frame;
+use support\Response;
 
 class Back {
     private array $Data = [
@@ -74,9 +75,9 @@ class Back {
 
     /**
      * @param bool $Type
-     * @return response
+     * @return Response
      */
-    public function json(bool $Type = false): response {
+    public function json(bool $Type = false): Response {
         return \response(Frame::json($this->array(), $Type), 200, ['Content-Type' => 'application/javascript']);
     }
 }
