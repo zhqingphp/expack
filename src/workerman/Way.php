@@ -20,6 +20,8 @@ class Way {
             $dir . '/js/CryptoJS.js',
             $dir . '/js/jsencrypt.js',
             $dir . '/js/axios.min.js',
+            $dir . '/js/Safety.js',
+            $dir . '/js/Frame.js',
         ], $list);
         $body = '';
         foreach ($arr as $v) {

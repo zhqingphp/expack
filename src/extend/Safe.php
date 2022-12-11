@@ -47,7 +47,11 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      * @param $random
      * @return string
      */
-    public static function movDe($data, $random): string {
+    public static function movDe($data, $random = null): string {
+        if (empty($random)) {
+            $random = $data['random'] ?? $random;
+            $data = $data['data'] ?? $data;
+        }
         $type = substr($random, 0, 1);
         if ($type == 1) {
             return self::aesDe($data, $random);
@@ -113,7 +117,11 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      * @param $random
      * @return string
      */
-    public static function aesDe($data, $random): string {
+    public static function aesDe($data, $random = null): string {
+        if (empty($random)) {
+            $random = $data['random'] ?? $random;
+            $data = $data['data'] ?? $data;
+        }
         $md5 = md5(substr($random, 2, strlen($random) - 4));
         $iv = substr($random, -2);
         $type = substr($random, 1, 1);
@@ -126,7 +134,11 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      * @param $random
      * @return string
      */
-    public static function desDe($data, $random): string {
+    public static function desDe($data, $random = null): string {
+        if (empty($random)) {
+            $random = $data['random'] ?? $random;
+            $data = $data['data'] ?? $data;
+        }
         $md5 = md5(substr($random, 2, strlen($random) - 4));
         $iv = substr($random, -2);
         $type = substr($random, 1, 1);
@@ -140,7 +152,11 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      * @param $random
      * @return string
      */
-    public static function des3De($data, $random): string {
+    public static function des3De($data, $random = null): string {
+        if (empty($random)) {
+            $random = $data['random'] ?? $random;
+            $data = $data['data'] ?? $data;
+        }
         $md5 = md5(substr($random, 2, strlen($random) - 4));
         $iv = substr($random, -2);
         $type = substr($random, 1, 1);
