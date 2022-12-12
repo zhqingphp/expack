@@ -2,6 +2,7 @@
 
 namespace zhqing\workerman;
 
+use zhqing\extend\Safe;
 use zhqing\extend\Frame;
 use support\Response;
 
@@ -64,20 +65,22 @@ class Back {
     }
 
     /**
+     * 是否加密
+     * @param bool $Type
      * @return array
      */
-    public function array(): array {
+    public function array(bool $Type = false): array {
         if (is_array($this->Data['data']) && empty($this->Data['count'])) {
             $this->Data['count'] = count($this->Data['data']);
         }
-        return $this->Data;
+        return (!empty($Type) ? Safe::movEn($this->Data) : $this->Data);
     }
 
     /**
-     * @param bool $Type
+     * @param bool $Type //是否加密
      * @return Response
      */
     public function json(bool $Type = false): Response {
-        return \response(Frame::json($this->array(), $Type), 200, ['Content-Type' => 'application/javascript']);
+        return \response(Frame::json($this->array($Type), false), 200, ['Content-Type' => 'application/javascript']);
     }
 }
