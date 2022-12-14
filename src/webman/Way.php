@@ -1,12 +1,15 @@
 <?php
 
 namespace zhqing\webman;
+
+use zhqing\extend\IpAdder;
+
 class Way {
     /**
      * 获取ip
      * @return string
      */
-    public static function get_ip(): string {
+    public static function getIp(): string {
         return \request()->getRemoteIp();
     }
 
@@ -14,8 +17,8 @@ class Way {
      * 获取地区
      * @return string
      */
-    public static function get_adder(): string {
-        return IpAdder::getAdder(self::get_ip());
+    public static function getAdder(): string {
+        return IpAdder::getAdder(self::getIp());
     }
 
     /**
