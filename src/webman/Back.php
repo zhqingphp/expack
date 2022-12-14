@@ -1,6 +1,6 @@
 <?php
 
-namespace zhqing\workerman;
+namespace zhqing\webman;
 
 use zhqing\extend\Safe;
 use zhqing\extend\Frame;

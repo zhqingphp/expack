@@ -1,7 +1,23 @@
 <?php
 
-namespace zhqing\workerman;
+namespace zhqing\webman;
 class Way {
+    /**
+     * 获取ip
+     * @return string
+     */
+    public static function get_ip(): string {
+        return \request()->getRemoteIp();
+    }
+
+    /**
+     * 获取地区
+     * @return string
+     */
+    public static function get_adder(): string {
+        return IpAdder::getAdder(self::get_ip());
+    }
+
     /**
      * @param array $list //追加js
      * @param bool $type /是否更新

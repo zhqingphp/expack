@@ -1,7 +1,11 @@
 <?php
 if (!function_exists('ps')) {
-    function ps($data) {
-        echo '<pre>' . print_r($data, true) . '</pre>';
+    function ps($data, $type = true) {
+        $content = '<pre>' . print_r($data, true) . '</pre>';
+        if (empty($type)) {
+            return $content;
+        }
+        echo $content;
     }
 }
 
