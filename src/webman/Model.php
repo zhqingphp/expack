@@ -79,17 +79,18 @@ class Model extends \support\Model {
     }
 
     /**
-     * @param Builder $builder
+     * @param Builder|null $builder
      * @return Builder
      */
-    public static function whereLike(Builder $builder): Builder {
+    public static function whereLike(Builder|null $builder = null): Builder {
         $order = static::$orderArr ?? ['id', 'asc'];
-        $builder->orderBy(($order[0] ?? 'id'), ($order[0] ?? 'asc'));
+        $builder = (!empty($builder) ? $builder->orderBy(($order[0] ?? 'id'), ($order[1] ?? 'asc')) : static::orderBy(($order[0] ?? 'id'), ($order[1] ?? 'asc')));
         if (($keyList = static::$keyList ?? []) && !empty($key = (\request()->post('key', \request()->get('key'))))) {
-            $builder->where(function (Builder $or) use ($key, $keyList) {
+            $builder = $builder->where(function (Builder $or) use ($key, $keyList) {
                 foreach ($keyList as $v) {
-                    $or->orWhere($v, 'like', '%' . $key . '%');
+                    $or = $or->orWhere($v, 'like', '%' . $key . '%');
                 }
+                return $or;
             });
         }
         return $builder;
