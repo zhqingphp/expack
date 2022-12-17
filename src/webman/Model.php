@@ -85,9 +85,9 @@ class Model extends \support\Model {
     public static function whereLike(Builder $builder): Builder {
         $order = static::$orderArr ?? ['id', 'asc'];
         $builder->orderBy(($order[0] ?? 'id'), ($order[0] ?? 'asc'));
-        if (!empty($key = (\request()->post('key', \request()->get('key'))))) {
-            $builder->where(function (Builder $or) use ($key) {
-                foreach (static::$keyList as $v) {
+        if (($keyList = static::$keyList ?? []) && !empty($key = (\request()->post('key', \request()->get('key'))))) {
+            $builder->where(function (Builder $or) use ($key, $keyList) {
+                foreach ($keyList as $v) {
                     $or->orWhere($v, 'like', '%' . $key . '%');
                 }
             });
@@ -141,7 +141,6 @@ class Model extends \support\Model {
                 $key = trim($key, ',') . ']';
                 $php = "<?php\r\n";
                 $php .= "namespace plugin\\back\\app\\model;\r\n";
-                $php .= "use Illuminate\Database\Eloquent\Builder;\r\n";
                 $php .= self::getTabField($a);
                 $php .= "class {$name} extends Common {\r\n";
                 $php .= "    //与模型关联的表名\r\n";
