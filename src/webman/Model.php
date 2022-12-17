@@ -101,7 +101,7 @@ class Model extends \support\Model {
             $common .= "    //指示是否自动维护时间戳\r\n";
             $common .= "    public \$timestamps = false;\r\n";
             $common .= "}\r\n";
-            $file = $dir . '/common.php';
+            $file = $dir . '/Common.php';
             file_put_contents($file, $common);
             $data[] = $file;
             $arr = self::getBase($k);
@@ -116,15 +116,20 @@ class Model extends \support\Model {
                         || $s->DATA_TYPE == 'text'
                     ) ? "'{$r}'," : "");
                 }
+                $sArr = explode('_', $a);
+                $name = '';
+                foreach ($sArr as $u) {
+                    $name .= ucwords($u);
+                }
                 $key = trim($key, ',') . ']';
                 $php = "<?php\r\n";
                 $php .= "namespace plugin\\back\\app\\model;\r\n";
                 $php .= "use Illuminate\Database\Eloquent\Builder;\r\n";
                 $php .= self::getTabField($a);
-                $php .= "class {$a} extends Common {\r\n";
-                $common .= "    //与模型关联的表名\r\n";
+                $php .= "class {$name} extends Common {\r\n";
+                $php .= "    //与模型关联的表名\r\n";
                 $php .= "public \$table = '{$a}';\r\n";
-                $common .= "    //模糊查找字段\r\n";
+                $php .= "    //模糊查找字段\r\n";
                 $php .= "public static array \$keyList = {$key};\r\n";
                 $php .= "public static function whereLike(Builder \$builder): Builder {\r\n";
                 $php .= "if (!empty(\$key = (\\request()->post('key', \\request()->get('key'))))) {\r\n";
@@ -137,8 +142,8 @@ class Model extends \support\Model {
                 $php .= "return \$builder;\r\n";
                 $php .= "}\r\n";
                 $php .= "}\r\n";
-                $file = $dir . '/' . $a . '.php';
-                file_put_contents($dir . '/' . $a . '.php', $php);
+                $file = $dir . '/' . $name . '.php';
+                file_put_contents($file, $php);
                 $data[] = $file;
             }
         }
