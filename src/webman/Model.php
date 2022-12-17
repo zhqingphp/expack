@@ -146,6 +146,8 @@ class Model extends \support\Model {
                 $php .= "class {$name} extends Common {\r\n";
                 $php .= "    //与模型关联的表名\r\n";
                 $php .= "public \$table = '{$a}';\r\n";
+                $php .= "    //顺序\r\n";
+                $php .= "public static array \$orderArr = ['id', 'desc'];\r\n";
                 $php .= "    //模糊查找字段\r\n";
                 $php .= "public static array \$keyList = {$key};\r\n";
                 $php .= "}\r\n";
