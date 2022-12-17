@@ -59,20 +59,21 @@ class Model extends \support\Model {
 
     /**
      * 获取表单字段信息并生成
+     * @param string|null $default //数据库配置
      * @param string|null $table
      * @return string
      */
-    public static function getTabField(string $table = null): string {
+    public static function getTabField(string|null $default = null, string $table = null): string {
         $self = new static();
-        $base = self::getBase();
+        $base = self::getBase($default);
         $table = (!empty($table) ? $table : $self->getTable());
-        $arr = self::getTab(null, $table);
+        $arr = self::getTab($default, $table);
         $html = "/**\r\n";
         $html .= " * " . ($base[$table]->TABLE_COMMENT ?? $table) . "\r\n";
         $data = "";
         foreach ($arr as $k => $v) {
             $html .= " * @property " . ($v->DATA_TYPE == 'int' ? 'int' : 'string') . " \$" . $k . " " . $v->COLUMN_COMMENT . "(" . $v->COLUMN_TYPE . ")\r\n";
-            $data .= "\$data[\"{$k}\"]=\$v[\"{$k}\"];//" . $v->COLUMN_COMMENT . "\r\n";
+            $data .= "\$data[\"{$k}\"]=\$req->post('{$k}');//" . $v->COLUMN_COMMENT . "\r\n";
         }
         $html .= " */\r\n/*\r\n" . $data . "*/\r\n";
         return $html;
@@ -142,7 +143,7 @@ class Model extends \support\Model {
                 $key = trim($key, ',') . ']';
                 $php = "<?php\r\n";
                 $php .= "namespace plugin\\back\\app\\model;\r\n";
-                $php .= self::getTabField($a);
+                $php .= self::getTabField($k, $a);
                 $php .= "class {$name} extends Common {\r\n";
                 $php .= "    //与模型关联的表名\r\n";
                 $php .= "public \$table = '{$a}';\r\n";
