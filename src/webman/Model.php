@@ -2,7 +2,7 @@
 
 namespace zhqing\webman;
 
-use zhqing\extend\Safe;
+use Illuminate\Database\Eloquent\Builder;
 use zhqing\extend\Frame;
 use support\Response;
 use support\Db;
@@ -79,6 +79,23 @@ class Model extends \support\Model {
     }
 
     /**
+     * @param Builder $builder
+     * @return Builder
+     */
+    public static function whereLike(Builder $builder): Builder {
+        $order = static::$orderArr ?? ['id', 'asc'];
+        $builder->orderBy(($order[0] ?? 'id'), ($order[0] ?? 'asc'));
+        if (!empty($key = (\request()->post('key', \request()->get('key'))))) {
+            $builder->where(function (Builder $or) use ($key) {
+                foreach (static::$keyList as $v) {
+                    $or->orWhere($v, 'like', '%' . $key . '%');
+                }
+            });
+        }
+        return $builder;
+    }
+
+    /**
      * 生成model文件
      * @param string $path
      * @return array
@@ -131,16 +148,6 @@ class Model extends \support\Model {
                 $php .= "public \$table = '{$a}';\r\n";
                 $php .= "    //模糊查找字段\r\n";
                 $php .= "public static array \$keyList = {$key};\r\n";
-                $php .= "public static function whereLike(Builder \$builder): Builder {\r\n";
-                $php .= "if (!empty(\$key = (\\request()->post('key', \\request()->get('key'))))) {\r\n";
-                $php .= "\$builder->where(function (Builder \$or) use (\$key) {\r\n";
-                $php .= "foreach (self::\$keyList as \$v) {\r\n";
-                $php .= "\$or->orWhere(\$v, 'like', '%' . \$key . '%');\r\n";
-                $php .= "}\r\n";
-                $php .= "});\r\n";
-                $php .= "}\r\n";
-                $php .= "return \$builder;\r\n";
-                $php .= "}\r\n";
                 $php .= "}\r\n";
                 $file = $dir . '/' . $name . '.php';
                 file_put_contents($file, $php);
