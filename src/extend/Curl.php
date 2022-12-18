@@ -546,7 +546,7 @@ class Curl {
         foreach ($this->setData['url'] as $k => $v) {
             $v = trim($v, '/') . '/';
             $this->setData['domain'] = $v;
-            $this->setData['domainId'] = $k;
+            $this->setData['id'] = $k;
             $this->setData['path'] = $this->setData['path'] ?? '';
             $this->setData['path'] = ($this->setData['path'] ? ltrim($this->setData['path'], '/') : '');
             if ($this->setData['mode'] == 'GET') {
