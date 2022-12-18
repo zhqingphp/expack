@@ -338,13 +338,13 @@ class Curl {
                 $this->body = mb_convert_encoding($this->body, $coding['to'], $coding['from']);
             }
             if (empty($type) || ($this->curlInfo['http_code'] ?? 0) == 200) {
-                if (!empty($succes) && is_callable($succes)) {
+                if (!empty($success) && is_callable($success)) {
                     $success($this->setData);
                 }
                 return true;
             } else {
                 $this->body = $this->body ?: curl_error($curl);
-                if (!empty($succes) && is_callable($succes)) {
+                if (!empty($error) && is_callable($error)) {
                     $error($this->setData);
                 }
                 return false;
