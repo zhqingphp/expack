@@ -92,6 +92,15 @@ if (!function_exists('seekDate')) {
 
 if (!function_exists('cliColor')) {
     function cliColor($data, int $type = 1): string {
-        return "\033[38;5;" . $type . ";1m" . $data . "\033[0m";
+        return (isCli() ? ("\033[38;5;" . $type . ";1m" . $data . "\033[0m") : ($data));
+    }
+}
+
+/**
+ * 判断是否Cli
+ */
+if (!function_exists('isCli')) {
+    function isCli(): bool|int {
+        return preg_match("/cli/i", php_sapi_name());
     }
 }
