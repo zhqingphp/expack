@@ -44,17 +44,41 @@ class Xml {
      * @param string $name
      * @param string $version
      * @param string $encoding
+     * @param string $attr
+     * @param int $i
      * @return string
      */
-    public static function arrToXml(array $arr, string $name = "XmlName", string $version = "1.0", string $encoding = "UTF-8"): string {
-        $xml = "<?xml version=\"{$version}\" encoding=\"{$encoding}\"?>";
-        $xml .= "<{$name}>";
+    public static function arrToXml(array $arr, string $name = "XmlName", string $version = "1.0", string $encoding = "UTF-8", string $attr = '', int $i = 0): string {
+        $xml = ($i > 0 ? "" : (!empty($version) ? "<?xml version=\"{$version}\" encoding=\"{$encoding}\"?>" : ""));
+        $xml .= (!empty($name) ? "<{$name}{$attr}>" : "");
+        $attrWay = function ($v) {
+            $attr = '';
+            if (isset($v['@attributes'])) {
+                foreach ($v['@attributes'] as $a => $b) {
+                    $attr .= "\"{$a}\"=\"{$b}\" ";
+                }
+                unset($v['@attributes']);
+            }
+            return ['attr' => trim($attr, " "), 'arr' => $v];
+        };
         if (!empty($arr)) {
             foreach ($arr as $k => $v) {
-                $xml .= "<{$k}>{$v}</{$k}>";
+                if (is_array($v)) {
+                    if (key($v) == 0) {
+                        foreach ($v as $b) {
+                            $attr = $attrWay($b);
+                            $xml .= (self::arrToXml($attr['arr'], $k, $version, $encoding, $attr['attr'], ($i + 1)));
+                        }
+                    } else {
+                        $attr = $attrWay($v);
+                        $xml .= (self::arrToXml($attr['arr'], $k, $version, $encoding, $attr['attr'], ($i + 1)));
+                    }
+                } else {
+                    $xml .= "<{$k}>{$v}</{$k}>";
+                }
             }
         }
-        $xml .= "</{$name}>";
+        $xml .= (!empty($name) ? "</{$name}>" : "");
         return $xml;
     }
 
