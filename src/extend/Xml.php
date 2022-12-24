@@ -34,8 +34,12 @@ class Xml {
      * @return mixed
      */
     public static function xmlToArr(string|array $xml): mixed {
-        $xmlData = (is_array($xml) ? (@file_get_contents($xml[key($xml)])) : $xml);
-        return (str_starts_with($xmlData, '<?') ? json_decode(json_encode(simplexml_load_string($xmlData, "SimpleXMLElement", LIBXML_NOCDATA)), true) : []);
+        try {
+            $xmlData = (is_array($xml) ? (@file_get_contents($xml[key($xml)])) : $xml);
+            return json_decode(json_encode(simplexml_load_string($xmlData, "SimpleXMLElement", LIBXML_NOCDATA)), true);
+        } catch (\Error | \Exception $e) {
+            return [];
+        }
     }
 
     /**
@@ -51,7 +55,7 @@ class Xml {
     public static function arrToXml(array $arr, string $name = "XmlName", string $version = "1.0", string $encoding = "UTF-8", string $attr = '', int $i = 0): string {
         $xml = ($i > 0 ? "" : (!empty($version) ? "<?xml version=\"{$version}\" encoding=\"{$encoding}\"?>" : ""));
         $xml .= (!empty($name) ? "<{$name}{$attr}>" : "");
-        $attrWay = function ($v) {
+        $tagFun = function ($v) {
             $attr = '';
             if (isset($v['@attributes'])) {
                 foreach ($v['@attributes'] as $a => $b) {
@@ -66,11 +70,11 @@ class Xml {
                 if (is_array($v)) {
                     if (key($v) == 0) {
                         foreach ($v as $b) {
-                            $attr = $attrWay($b);
+                            $attr = $tagFun($b);
                             $xml .= (self::arrToXml($attr['arr'], $k, $version, $encoding, $attr['attr'], ($i + 1)));
                         }
                     } else {
-                        $attr = $attrWay($v);
+                        $attr = $tagFun($v);
                         $xml .= (self::arrToXml($attr['arr'], $k, $version, $encoding, $attr['attr'], ($i + 1)));
                     }
                 } else {
@@ -117,20 +121,24 @@ class Xml {
      * @return array
      */
     public static function toArr(array|string $data): array {
-        $content = (is_array($data) ? (@file_get_contents($data[key($data)])) : $data);
-        $xml = simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
-        $attr = [];
-        $attributes = $xml->attributes();
-        if (count($attributes) > 0) {
-            foreach ($attributes as $k => $v) {
-                $attr[$k] = (string)$v;
+        try {
+            $content = (is_array($data) ? (@file_get_contents($data[key($data)])) : $data);
+            $xml = simplexml_load_string($content, 'SimpleXMLElement', LIBXML_NOCDATA);
+            $attr = [];
+            $attributes = $xml->attributes();
+            if (count($attributes) > 0) {
+                foreach ($attributes as $k => $v) {
+                    $attr[$k] = (string)$v;
+                }
             }
+            $arr['tag'] = self::getXmlTag($content);
+            $arr['name'] = $xml->getName();
+            $arr['attr'] = $attr;
+            $arr['data'] = self::toArrHandle($xml->children());
+            return $arr;
+        } catch (\Error | \Exception $e) {
+            return [];
         }
-        $arr['tag'] = self::getXmlTag($content);
-        $arr['name'] = $xml->getName();
-        $arr['attr'] = $attr;
-        $arr['data'] = self::toArrHandle($xml->children());
-        return $arr;
     }
 
     /**
@@ -141,25 +149,29 @@ class Xml {
      * @return array
      */
     public static function toArray(array|string $data, string $type = 'val'): array {
-        $content = (is_array($data) ? (@file_get_contents($data[key($data)])) : $data);
-        $xml = new DOMDocument();
-        $xml->loadXML($content);
-        $root = $xml->documentElement;//根目录
-        $index = $xml->getElementsByTagName($root->tagName);//根对像
-        $obj = $index->item(0)->attributes;
-        if ($obj->length > 0) {
-            for ($i = 0; $i < $obj->length; $i++) {
-                $tag = $obj->item($i);
-                if (!empty($tag->nodeName)) {
-                    $attr[$tag->nodeName] = ($type == 'val' ? $tag->nodeValue : $tag->textContent);
+        try {
+            $content = (is_array($data) ? (@file_get_contents($data[key($data)])) : $data);
+            $xml = new DOMDocument();
+            $xml->loadXML($content);
+            $root = $xml->documentElement;//根目录
+            $index = $xml->getElementsByTagName($root->tagName);//根对像
+            $obj = $index->item(0)->attributes;
+            if ($obj->length > 0) {
+                for ($i = 0; $i < $obj->length; $i++) {
+                    $tag = $obj->item($i);
+                    if (!empty($tag->nodeName)) {
+                        $attr[$tag->nodeName] = ($type == 'val' ? $tag->nodeValue : $tag->textContent);
+                    }
                 }
             }
+            $arr['tag'] = self::getXmlTag($content);
+            $arr['name'] = $root->tagName;
+            $arr['attr'] = (!empty($attr) ? $attr : []);
+            $arr['data'] = self::toArrayHandle($index->item(0), $type);
+            return $arr;
+        } catch (\Error | \Exception $e) {
+            return [];
         }
-        $arr['tag'] = self::getXmlTag($content);
-        $arr['name'] = $root->tagName;
-        $arr['attr'] = (!empty($attr) ? $attr : []);
-        $arr['data'] = self::toArrayHandle($index->item(0), $type);
-        return $arr;
     }
 
 
