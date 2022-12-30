@@ -22,6 +22,26 @@ class Way {
     }
 
     /**
+     * 多个端口提供http服务
+     * @param string|int $port
+     * @param int|null $count
+     * @return array
+     */
+    public static function httpServe(string|int $port, null|int $count = null) {
+        return [
+            'handler' => \Webman\App::class,
+            'listen' => 'http://0.0.0.0:' . $port,
+            'count' => ($count ?: cpu_count() * 4), // 进程数
+            'constructor' => [
+                'request_class' => \support\Request::class, // request类设置
+                'logger' => \support\Log::channel('default'), // 日志实例
+                'app_path' => app_path(), // app目录位置
+                'public_path' => public_path() // public目录位置
+            ]
+        ];
+    }
+
+    /**
      * @param array $list //追加js
      * @param bool $type /是否更新
      * @return mixed
