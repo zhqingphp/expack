@@ -92,7 +92,8 @@ if (!function_exists('seekDate')) {
 
 if (!function_exists('cliColor')) {
     function cliColor($data, int $type = 1): string {
-        return (isCli() ? ("\033[38;5;" . $type . ";1m" . $data . "\033[0m") : ($data));
+        $req = function_exists('request');
+        return ((isCli() && (!empty($req) && empty(request()))) ? ("\033[38;5;" . $type . ";1m" . $data . "\033[0m") : ($data));
     }
 }
 
@@ -102,5 +103,47 @@ if (!function_exists('cliColor')) {
 if (!function_exists('isCli')) {
     function isCli(): bool|int {
         return preg_match("/cli/i", php_sapi_name());
+    }
+}
+
+/**
+ * 通过a.b.c.d生成多维数组
+ * @param $key //名字
+ * @param $data //内容
+ * @return mixed
+ */
+
+if (!function_exists('setArr')) {
+    function setArr($key, $data): mixed {
+        $arr = array_merge(\explode('.', $key), [$data]);
+        while (\count($arr) > 1) {
+            $v = \array_pop($arr);
+            $k = \array_pop($arr);
+            $arr[] = [$k => $v];
+        }
+        return $arr[\key($arr)];
+    }
+}
+/**
+ * 通过a.b.c.d获取数组内容
+ * @param array $data //要取值的数组
+ * @param string|null $key //支持aa.bb.cc.dd这样获取数组内容
+ * @param $default //默认值
+ * @return mixed
+ */
+if (!function_exists('getArr')) {
+    function getArr(array $data, string|null $key = null, $default = null): mixed {
+        if (isset($key)) {
+            $arr = \explode('.', $key);
+            foreach ($arr as $v) {
+                if (isset($data[$v])) {
+                    $data = ($data[$v] ?: $default);
+                } else {
+                    $data = $default;
+                    break;
+                }
+            }
+        }
+        return $data;
     }
 }
