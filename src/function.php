@@ -115,7 +115,7 @@ if (!function_exists('isCli')) {
 
 if (!function_exists('setArr')) {
     function setArr($key, $data): mixed {
-        $arr = array_merge(\explode('.', $key), [$data]);
+        $arr = \array_merge(\explode('.', $key), [$data]);
         while (\count($arr) > 1) {
             $v = \array_pop($arr);
             $k = \array_pop($arr);
@@ -127,12 +127,12 @@ if (!function_exists('setArr')) {
 /**
  * 通过a.b.c.d获取数组内容
  * @param array $data //要取值的数组
- * @param string|null $key //支持aa.bb.cc.dd这样获取数组内容
+ * @param string|int|null $key //支持aa.bb.cc.dd这样获取数组内容
  * @param $default //默认值
  * @return mixed
  */
 if (!function_exists('getArr')) {
-    function getArr(array $data, string|null $key = null, $default = null): mixed {
+    function getArr(array $data, string|int|null $key = null, $default = null): mixed {
         if (isset($key)) {
             $arr = \explode('.', $key);
             foreach ($arr as $v) {
