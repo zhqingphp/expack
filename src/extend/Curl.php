@@ -8,6 +8,7 @@ class Curl {
     public array $curlInfo = [];
     public string $header = '';
     public string $body = '';
+    public string $full = '';
     public string $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36 Edg/99.0.1150.46';
 
     /**
@@ -342,10 +343,10 @@ class Curl {
         $this->handleCurl()->handleReq(function ($url) use ($curl, $type, $success, $error) {
             $this->curlSet[CURLOPT_URL] = $url;
             curl_setopt_array($curl, $this->curlSet);
-            $content = curl_exec($curl);
+            $this->full = curl_exec($curl);
             $this->curlInfo = curl_getinfo($curl);
-            $this->header = trim(substr($content, 0, $this->curlInfo['header_size']), "\r\n\r\n");
-            $this->body = substr($content, $this->curlInfo['header_size']);
+            $this->header = trim(substr($this->full, 0, $this->curlInfo['header_size']), "\r\n\r\n");
+            $this->body = substr($this->full, $this->curlInfo['header_size']);
             if (!empty($coding = ($this->setData['coding'] ?? []))) {
                 $this->body = mb_convert_encoding($this->body, $coding['to'], $coding['from']);
             }
@@ -415,6 +416,14 @@ class Curl {
      */
     public function body(): string {
         return $this->body;
+    }
+
+    /**
+     * 接收内容(exec后执行)
+     * @return string
+     */
+    public function full(): string {
+        return $this->full;
     }
 
     /**
