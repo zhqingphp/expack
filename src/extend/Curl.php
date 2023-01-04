@@ -122,8 +122,8 @@ class Curl {
      * @param mixed $data
      * @return $this
      */
-    public function curl(mixed $name, mixed $data): static {
-        $this->setData['curl'][$name] = $data;
+    public function curl(mixed $name, mixed $data = null): static {
+        $this->setData['curl'] = array_merge($this->setData['curl'], (is_array($name) ? $name : [$name => $data]));
         return $this;
     }
 
@@ -161,13 +161,7 @@ class Curl {
      * @return $this
      */
     public function setHead(array|string $key, string $data = ''): static {
-        $head = $this->setData['header'] ?? [];
-        if (is_array($key)) {
-            $header = array_merge($head, $key);
-        } else {
-            $header = array_merge($head, [$key => $data]);
-        }
-        $this->setData['header'] = $header;
+        $this->setData['header'] = array_merge($this->setData['header'], (is_array($key) ? $key : [$key => $data]));
         return $this;
     }
 
@@ -202,6 +196,17 @@ class Curl {
     }
 
     /**
+     * 上传文件
+     * @param string|array $name
+     * @param string|null $data
+     * @return $this
+     */
+    public function file(string|array $name, string|null $data = null): static {
+        $this->setData['file'] = array_merge($this->setData['file'], (is_array($name) ? $name : [$name => $data]));
+        return $this;
+    }
+
+    /**
      * 设置解码名称
      * @param string $data
      * @return $this
@@ -223,12 +228,21 @@ class Curl {
 
     /**
      * 设置转换编码
-     * @param string $to
-     * @param string $from
+     * @param string|null $to
+     * @param string|null $from
      * @return $this
      */
-    public function coding(string $to, string $from): static {
-        $this->setData['coding'] = ['to' => $to, 'from' => $from];
+    public function coding(string|null $to = null, string|null $from = null): static {
+        if (empty($from)) {
+            if ($to == 'gbk') {
+                $coding = ['to' => 'GB2312', 'from' => 'UTF-8'];
+            } else {
+                $coding = ['to' => 'UTF-8', 'from' => 'GBK'];
+            }
+        } else {
+            $coding = ['to' => $to, 'from' => $from];
+        }
+        $this->setData['coding'] = $coding;
         return $this;
     }
 
@@ -326,15 +340,13 @@ class Curl {
     public function exec(bool $type = true, mixed $success = null, mixed $error = null): static {
         $curl = curl_init();
         $this->handleCurl()->handleReq(function ($url) use ($curl, $type, $success, $error) {
-            $this->setData['reqUrl'] = $url;
             $this->curlSet[CURLOPT_URL] = $url;
             curl_setopt_array($curl, $this->curlSet);
             $content = curl_exec($curl);
             $this->curlInfo = curl_getinfo($curl);
             $this->header = trim(substr($content, 0, $this->curlInfo['header_size']), "\r\n\r\n");
             $this->body = substr($content, $this->curlInfo['header_size']);
-            if (isset($this->setData['coding'])) {
-                $coding = $this->setData['coding'];
+            if (!empty($coding = ($this->setData['coding'] ?? []))) {
                 $this->body = mb_convert_encoding($this->body, $coding['to'], $coding['from']);
             }
             if (empty($type) || ($this->curlInfo['http_code'] ?? 0) == 200) {
@@ -385,7 +397,7 @@ class Curl {
      * @param false $type
      * @return string|void
      */
-    public function debug(bool $type = true) {
+    public function debug(bool $type = false) {
         $html = '<pre>' . print_r($this->info('total_time'), true) . '</pre>';
         $html .= "<textarea rows='30' cols='300'>" . $this->header . "\r\n\r\n" . $this->body . "</textarea>";
         $html .= '<pre>' . print_r($this->curlSet, true) . '</pre>';
@@ -511,11 +523,11 @@ class Curl {
     }
 
     /**
-     * 获取请求URL
-     * @return string
+     * 获取请求数据
+     * @return array
      */
-    public function reqUrl(): string {
-        return $this->setData['reqUrl'];
+    public function getReqData(): array {
+        return $this->setData;
     }
 
     /**
@@ -531,9 +543,8 @@ class Curl {
      * @return array
      */
     public function getDomain(): array {
-        return [$this->setData['domainId'] => $this->setData['domain']];
+        return [$this->setData['id'] => $this->setData['domain']];
     }
-
 
     /**
      * @param $fun
@@ -544,17 +555,15 @@ class Curl {
             $this->setData['url'] = [$this->setData['url']];
         }
         foreach ($this->setData['url'] as $k => $v) {
-            $v = trim($v, '/') . '/';
             $this->setData['domain'] = $v;
             $this->setData['id'] = $k;
-            $this->setData['path'] = $this->setData['path'] ?? '';
-            $this->setData['path'] = ($this->setData['path'] ? ltrim($this->setData['path'], '/') : '');
+            $this->setData['path'] = (!empty($path = ($this->setData['path'] ?? '')) ? ltrim($path, '/') : '');
+            $v = trim($v, '/') . '/';
             if ($this->setData['mode'] == 'GET') {
                 $newUrl = $this->handleGetUrl($v . $this->setData['path'], $this->setData['data']);
             } else {
                 $newUrl = $v . $this->setData['path'];
             }
-
             $this->setOriginHeader($newUrl);
             if (!empty($fun($newUrl))) {
                 return;
@@ -603,22 +612,29 @@ class Curl {
             $this->curlSet[CURLOPT_POST] = true;
         }
         //数据提交方式
-        if (!empty($this->setData['form']) && !empty($this->setData['data'] ?? '')) {
-            //json提交
-            if (($this->setData['json'] ?? false)) {
-                $json = self::arrJson($this->setData['data']);
-                $data = !empty($json) ? $json : $this->setData['data'];
-                $this->setData['data'] = $data;
-                $this->setHead(['Content-Type' => 'application/json', 'Content-Length' => strlen($data)]);
-            } else {
-                //为数组时提交
-                if (is_array($this->setData['data'])) {
-                    $data = http_build_query($this->setData['data']);
-                    $this->setData['data'] = $data;
-                    $this->setHead(['Content-Length' => strlen($data)]);
+        if (!empty($this->setData['form'])) {
+            if (!empty($file = ($this->setData['file'] ?? []))) {
+                foreach ($file as $k => $v) {
+                    $this->setData['data'][$k] = new \CURLFile(\realpath($v));
                 }
             }
-            $this->curlSet[CURLOPT_POSTFIELDS] = $this->setData['data'];
+            if (!empty($this->setData['data'] ?? '')) {
+                //json提交
+                if (($this->setData['json'] ?? false)) {
+                    $json = self::arrJson($this->setData['data']);
+                    $data = !empty($json) ? $json : $this->setData['data'];
+                    $this->setData['data'] = $data;
+                    $this->setHead(['Content-Type' => 'application/json', 'Content-Length' => strlen($data)]);
+                } else {
+                    //为数组时提交
+                    if (is_array($this->setData['data'])) {
+                        $data = http_build_query($this->setData['data']);
+                        $this->setData['data'] = $data;
+                        $this->setHead(['Content-Length' => strlen($data)]);
+                    }
+                }
+                $this->curlSet[CURLOPT_POSTFIELDS] = $this->setData['data'];
+            }
         }
         //是否ajax提交
         if (!empty($this->setData['ajax'] ?? false)) {
@@ -635,8 +651,8 @@ class Curl {
             $this->curlSet[CURLOPT_COOKIE] = $cookie;
         }
         //设置解码名称
-        if (!empty($this->setData['encoding'] ?? '')) {
-            $this->curlSet[CURLOPT_ENCODING] = $this->setData['encoding'];
+        if (!empty($encoding = ($this->setData['encoding'] ?? ''))) {
+            $this->curlSet[CURLOPT_ENCODING] = $encoding;
         }
         //连接时间,设置为0，则无限等待
         $this->curlSet[CURLOPT_CONNECTTIMEOUT] = $this->setData['timeConnect'] ?? 8;
@@ -647,7 +663,7 @@ class Curl {
         //设置成 2，会检查公用名是否存在，并且是否与提供的主机名匹配。 0 为不检查名称。 在生产环境中，这个值应该是 2（默认值）
         $this->curlSet[CURLOPT_SSL_VERIFYHOST] = $this->setData['sslHost'] ?? false;
         //自动设置浏览器信息
-        $this->curlSet[CURLOPT_USERAGENT] = ($this->setData['userAgent'] ?? ($_SERVER['HTTP_USER_AGENT'] ?? $this->userAgent));
+        $this->curlSet[CURLOPT_USERAGENT] = (!empty($userAgent = ($this->setData['userAgent'] ?? '')) ? $userAgent : (($_SERVER['HTTP_USER_AGENT'] ?? '') ?: $this->userAgent));
         //自动跳转时设置开启头部
         $follow = $this->setData['follow'] ?? false;
         $this->curlSet[CURLOPT_FOLLOWLOCATION] = $follow;
@@ -692,14 +708,12 @@ class Curl {
             }
         }
         if (!empty($ReqIp = ($this->setData['reqIp'] ?? ''))) {
-            if ($ReqIp != '127.0.0.1') {
-                $this->setHead([
-                    'CLIENT-IP' => $ReqIp,
-                    'X-FORWARDED-FOR' => $ReqIp,
-                    'CDN_SRC_IP' => $ReqIp,
-                    'CF_CONNECTING_IP' => $ReqIp
-                ]);
-            }
+            $this->setHead([
+                'CLIENT-IP' => $ReqIp,
+                'X-FORWARDED-FOR' => $ReqIp,
+                'CDN_SRC_IP' => $ReqIp,
+                'CF_CONNECTING_IP' => $ReqIp
+            ]);
         }
         //自定义Curl设置(不能设置请求头部信息)
         if (!empty($curl = $this->setData['curl'] ?? '')) {
