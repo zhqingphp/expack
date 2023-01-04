@@ -123,7 +123,7 @@ class Curl {
      * @return $this
      */
     public function curl(mixed $name, mixed $data = null): static {
-        $this->setData['curl'] = array_merge($this->setData['curl'], (is_array($name) ? $name : [$name => $data]));
+        $this->setData['curl'] = array_merge(($this->setData['curl'] ?? []), (is_array($name) ? $name : [$name => $data]));
         return $this;
     }
 
@@ -161,7 +161,7 @@ class Curl {
      * @return $this
      */
     public function setHead(array|string $key, string $data = ''): static {
-        $this->setData['header'] = array_merge($this->setData['header'], (is_array($key) ? $key : [$key => $data]));
+        $this->setData['header'] = array_merge(($this->setData['header'] ?? []), (is_array($key) ? $key : [$key => $data]));
         return $this;
     }
 
@@ -202,7 +202,7 @@ class Curl {
      * @return $this
      */
     public function file(string|array $name, string|null $data = null): static {
-        $this->setData['file'] = array_merge($this->setData['file'], (is_array($name) ? $name : [$name => $data]));
+        $this->setData['file'] = array_merge(($this->setData['file'] ?? []), (is_array($name) ? $name : [$name => $data]));
         return $this;
     }
 
