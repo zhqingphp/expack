@@ -47,7 +47,7 @@ class Xml {
         $xml .= (!empty($name) ? "<{$name}{$attr}>" : "");
         if (!empty($arr)) {
             foreach ($arr as $k => $v) {
-                if (!empty($v) && empty(is_string($v))) {
+                if (!empty($v) && (is_array($v) || is_object($v))) {
                     if (is_array($v)) {
                         foreach ($v as $b) {
                             $xml .= self::arrToXml($b, $k, $version, $encoding, $tag, ($i + 1));
@@ -56,7 +56,7 @@ class Xml {
                         $xml .= self::arrToXml($v, $k, $version, $encoding, $tag, ($i + 1));
                     }
                 } else {
-                    $xml .= "<{$k}>" . ((string)$v) . "</{$k}>";
+                    $xml .= "<{$k}>" . ((is_array($v) || is_object($v)) ? "" : $v) . "</{$k}>";
                 }
             }
         }
