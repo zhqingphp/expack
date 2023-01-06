@@ -26,71 +26,42 @@ class Xml {
     /**
      * array|object转xml
      * @param array|object $arr
-     * @param string $name
-     * @param string $version
-     * @param string $encoding
-     * @param string $attr
+     * @param string|null $name
+     * @param string|null $version
+     * @param string|null $encoding
+     * @param string $tag
      * @param int $i
+     * @param string $attr
      * @return string
      */
-    public static function arrToXml(array|object $arr, string $name = "XmlName", string $version = "1.0", string $encoding = "UTF-8", string $attr = '', int $i = 0): string {
-        $tag = '@attributes';
-        if (is_array($arr)) {
-            if (!empty($tabArr = ($arr[$tag] ?? []))) {
-                unset($arr[$tag]);
-            }
-        } else if (is_object($arr)) {
-            if (!empty($tabArr = ($arr->$tag ?? []))) {
-                unset($arr->$tag);
-            }
-        }
-        if (!empty($tabArr)) {
+    public static function arrToXml(array|object $arr, string|null $name = "XmlName", string|null $version = "1.0", string|null $encoding = "UTF-8", string $tag = "@attributes", int $i = 0, string $attr = ""): string {
+        $arr = (is_array($arr) ? json_decode(json_encode($arr)) : $arr);
+        if (!empty($tabArr = ($arr->{$tag} ?? []))) {
             foreach ($tabArr as $a => $b) {
                 $attr .= " {$a}=\"{$b}\"";
             }
             $attr = (" " . trim($attr, " "));
+            unset($arr->{$tag});
         }
-        $xml = ($i > 0 ? "" : (!empty($version) ? "<?xml version=\"{$version}\" encoding=\"{$encoding}\"?>" : ""));
+        $xml = ($i > 0 ? "" : (!empty($version) ? "<?xml version=\"{$version}\"" . ($encoding ? " encoding=\"{$encoding}\"" : "") . "?>" : ""));
         $xml .= (!empty($name) ? "<{$name}{$attr}>" : "");
         if (!empty($arr)) {
             foreach ($arr as $k => $v) {
-                if (!empty($v) && (is_array($v) || is_object($v))) {
-                    if (is_array($v) && key($v) == 0) {
+                if (!empty($v) && empty(is_string($v))) {
+                    if (is_array($v)) {
                         foreach ($v as $b) {
-                            $xml .= (self::arrToXml($b, $k, $version, $encoding, '', ($i + 1)));
+                            $xml .= self::arrToXml($b, $k, $version, $encoding, $tag, ($i + 1));
                         }
                     } else {
-                        $xml .= (self::arrToXml($v, $k, $version, $encoding, '', ($i + 1)));
+                        $xml .= self::arrToXml($v, $k, $version, $encoding, $tag, ($i + 1));
                     }
                 } else {
-                    $xml .= "<{$k}>" . ((is_array($v) || is_object($v)) ? '' : $v) . "</{$k}>";
+                    $xml .= "<{$k}>" . ((string)$v) . "</{$k}>";
                 }
             }
         }
         $xml .= (!empty($name) ? "</{$name}>" : "");
         return $xml;
-    }
-
-    /**
-     * 获取Xml内容
-     * @param $arr
-     * @param $key
-     * @param $default
-     * @return mixed
-     */
-    public static function get($arr, $key, $default = null): mixed {
-        return (!empty($data = ($arr['data'][$key]['data'] ?? $default)) ? $data : $default);
-    }
-
-    /**
-     * 获取Xml内容
-     * @param $arr
-     * @param $key
-     * @param $default
-     * @return mixed
-     */
-    public static function getArr($arr, $key, $default = null): mixed {
-        return (!empty($data = ($arr['data'][$key]['data'][0] ?? $default)) ? $data : $default);
     }
 
     /**
@@ -124,10 +95,9 @@ class Xml {
      * 支持一级属性标签
      * XML转Array
      * @param array|string $data //str为xml内容,array为文件
-     * @param string $type //可选text
      * @return array
      */
-    public static function toArray(array|string $data, string $type = 'val'): array {
+    public static function toArray(array|string $data): array {
         try {
             $content = (is_array($data) ? (@file_get_contents($data[key($data)])) : $data);
             $xml = new DOMDocument();
@@ -139,14 +109,14 @@ class Xml {
                 for ($i = 0; $i < $obj->length; $i++) {
                     $tag = $obj->item($i);
                     if (!empty($tag->nodeName)) {
-                        $attr[$tag->nodeName] = ($type == 'val' ? $tag->nodeValue : $tag->textContent);
+                        $attr[$tag->nodeName] = $tag->nodeValue;
                     }
                 }
             }
             $arr['tag'] = self::getXmlTag($content);
             $arr['name'] = $root->tagName;
             $arr['attr'] = (!empty($attr) ? $attr : []);
-            $arr['data'] = self::toArrayHandle($index->item(0), $type);
+            $arr['data'] = self::toArrayHandle($index->item(0));
             return $arr;
         } catch (Error | Exception $e) {
             return [];
@@ -185,7 +155,7 @@ class Xml {
      * @param $content
      * @return array
      */
-    private static function getXmlTag($content): array {
+    protected static function getXmlTag($content): array {
         preg_match_all("/ (.*?)\=(\'|\")(.*?)(\'|\")/i", explode("?>", $content)[0], $array);
         if (isset($array[1])) {
             foreach ($array[1] as $k => $v) {
@@ -200,7 +170,7 @@ class Xml {
      * @param $arr
      * @return string
      */
-    private static function toXmlHandle($arr): string {
+    protected static function toXmlHandle($arr): string {
         $xml = '';
         $attr = function ($v, $attrStr = '') {
             $attr = ($v['attr'] ?? []);
@@ -237,7 +207,7 @@ class Xml {
      * @param $xml
      * @return array
      */
-    private static function toArrHandle($xml): array {
+    protected static function toArrHandle($xml): array {
         foreach ($xml as $child) {
             $attr = [];
             $attributes = $child->attributes();
@@ -273,7 +243,7 @@ class Xml {
      * @param $type
      * @return array
      */
-    private static function toArrayHandle($obj, $type): array {
+    protected static function toArrayHandle($obj, $type): array {
         $child = $obj->childNodes;
         $arr = [];
         if ($child->length > 0) {
