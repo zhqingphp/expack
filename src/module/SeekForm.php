@@ -5,7 +5,7 @@ namespace zhqing\module;
 use zhqing\extend\Frame;
 
 class SeekForm {
-    private array $body = [];
+    public array $body = [];
 
     public function __construct(array|string $data) {
         $this->body = is_array($data) ? $data : Frame::isJson($this->body);
