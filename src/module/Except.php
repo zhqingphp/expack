@@ -3,6 +3,7 @@
 namespace zhqing\module;
 
 use zhqing\extend\Frame;
+use zhqing\extend\StrArrange;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -40,7 +41,7 @@ class Except {
         $arr = [];
         foreach ($data as $k => $v) {
             ++$i;
-            $arr[$k] = self::row($i);
+            $arr[$k] = StrArrange::aZ($i);
             $sheet->setCellValue($arr[$k] . '1', $v);
         }
         $i = 1;
@@ -62,25 +63,4 @@ class Except {
         $writer->save($file);
     }
 
-    /**
-     * 最多输出二个组合
-     * @param $i
-     * @param string $data
-     * @return string
-     */
-    public static function row($i, string $data = ''): string {
-        $str = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z';
-        $arr = explode(',', $str);
-        $iv = count($arr);
-        $key = ($i - 1);
-        if ($i > $iv) {
-            $number = ($i / $iv);
-            $int = intval($number);
-            $key = ($i - ($int * $iv));
-            $key = (($key > 0 ? $key : $iv) - 1);
-            $int = (($int > 0 ? is_int($number) ? $int - 2 : $int - 1 : ($iv - 1)));
-            $data = join('', array_slice($arr, $int, 1));
-        }
-        return $data . $arr[$key] ?? $arr[0];
-    }
 }

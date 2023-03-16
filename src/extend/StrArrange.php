@@ -4,6 +4,46 @@ namespace zhqing\extend;
 
 class StrArrange {
     /**
+     * 根据总列数生成EXCEL列名的算法
+     * @param $i
+     * @param string $str
+     * @param int $iv
+     * @return string
+     */
+    public static function aZ($i, string $str = '', int $iv = 26): string {
+        while ($i > 0) {
+            $int = $i % $iv;
+            $int = ($int == 0) ? $iv : $int;
+            $str = strtoupper(chr($int + 64)) . $str;
+            $i = ($i - $int) / $iv;
+        }
+        return $str;
+    }
+
+    /**
+     * 根据总列数生成EXCEL列名的算法
+     * 最多输出二个组合
+     * @param $i
+     * @param string $data
+     * @return string
+     */
+    public static function aAZZ($i, string $data = ''): string {
+        $str = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z';
+        $arr = explode(',', $str);
+        $iv = count($arr);
+        $key = ($i - 1);
+        if ($i > $iv) {
+            $number = ($i / $iv);
+            $int = intval($number);
+            $key = ($i - ($int * $iv));
+            $key = (($key > 0 ? $key : $iv) - 1);
+            $int = (($int > 0 ? is_int($number) ? $int - 2 : $int - 1 : ($iv - 1)));
+            $data = join('', array_slice($arr, $int, 1));
+        }
+        return $data . $arr[$key] ?? $arr[0];
+    }
+
+    /**
      * 全部结合
      * row('ABC',2)
      * @param $letters
