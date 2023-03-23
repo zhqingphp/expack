@@ -10,7 +10,7 @@ class Way {
      * @return string
      */
     public static function getIp(): string {
-        return \request()->getRemoteIp();
+        return \request()->getRealIp();
     }
 
     /**
