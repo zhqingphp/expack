@@ -13,6 +13,21 @@ class Way {
         return \request()->getRealIp();
     }
 
+    public static function view(string $plugin, array|string $template, array $vars = [], string $app = null): Response {
+        $handler = \config("plugin.{$plugin}.view.handler", \support\view\ThinkPHP::class);
+        $dir = rtrim(config("plugin.{$plugin}.view.options.view_path", base_path() . "/plugin/{$plugin}/app/view/"), '/');
+        $suffix = '.' . config("plugin.{$plugin}.view.options.view_suffix", "html");
+        if (is_array($template)) {
+            $html = '';
+            foreach ($template as $v) {
+                $html .= $handler::render($dir . '/' . trim($v, '/') . $suffix, $vars, $app);
+            }
+        } else {
+            $html = $handler::render($dir . '/' . trim($template, '/') . $suffix, $vars, $app);
+        }
+        return new Response(200, [], $html);
+    }
+
     /**
      * 获取地区
      * @return string
