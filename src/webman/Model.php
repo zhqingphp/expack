@@ -126,7 +126,7 @@ class Model extends \support\Model {
             $arr = self::getBase($k);
             foreach ($arr as $a => $b) {
                 $tab = self::getTab($k, $a);
-                $key = '[';
+                $key = '[\'id\',';
                 foreach ($tab as $r => $s) {
                     $key .= ((
                         $s->DATA_TYPE == 'varchar'
@@ -168,7 +168,8 @@ class Model extends \support\Model {
                 $php .= "'jsons'=>[],\r\n";
                 $php .= "'edit'=>[],\r\n";
                 $php .= "'time'=>[],\r\n";
-                $php .= "'save'=>[]\r\n";
+                $php .= "'del'=>['id'],//排除保存的\r\n";
+                $php .= "'save'=>[]//保存不显示的\r\n";
                 $php .= "];\r\n";
                 $php .= "}\r\n";
                 $file = $dir . '/' . $name . '.php';
