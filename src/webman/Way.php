@@ -3,6 +3,8 @@
 namespace zhqing\webman;
 
 use zhqing\extend\IpAdder;
+use support\view\ThinkPHP;
+use support\Response;
 
 class Way {
     /**
@@ -13,8 +15,15 @@ class Way {
         return \request()->getRealIp();
     }
 
-    public static function view(string $plugin, array|string $template, array $vars = [], string $app = null): Response {
-        $handler = \config("plugin.{$plugin}.view.handler", \support\view\ThinkPHP::class);
+    /**
+     * @param string $plugin
+     * @param array|string $template
+     * @param array $vars
+     * @param string|null $app
+     * @return Response
+     */
+    public static function view(string $plugin, array|string $template, array $vars = [], string|null $app = null): Response {
+        $handler = \config("plugin.{$plugin}.view.handler", ThinkPHP::class);
         $dir = rtrim(config("plugin.{$plugin}.view.options.view_path", base_path() . "/plugin/{$plugin}/app/view/"), '/');
         $suffix = '.' . config("plugin.{$plugin}.view.options.view_suffix", "html");
         if (is_array($template)) {
