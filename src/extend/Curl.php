@@ -566,13 +566,9 @@ class Curl {
         foreach ($this->setData['url'] as $k => $v) {
             $this->setData['domain'] = $v;
             $this->setData['id'] = $k;
-            $this->setData['path'] = (!empty($path = ($this->setData['path'] ?? '')) ? ltrim($path, '/') : '');
-            $v = trim($v, '/') . '/';
-            if ($this->setData['mode'] == 'GET') {
-                $newUrl = $this->handleGetUrl($v . $this->setData['path'], $this->setData['data']);
-            } else {
-                $newUrl = $v . $this->setData['path'];
-            }
+            $this->setData['path'] = ltrim(($this->setData['path'] ?? ''), '/');
+            $newUrl = (empty($this->setData['path']) ? $v : (str_ends_with($v, '/') ? $v : ($v . '/'))) . $this->setData['path'];
+            $newUrl = (($this->setData['mode'] == 'GET') ? ($this->handleGetUrl($newUrl, $this->setData['data'])) : $newUrl);
             $this->setOriginHeader($newUrl);
             if (!empty($fun($newUrl))) {
                 return;
