@@ -72,6 +72,26 @@ if (!function_exists('seekTime')) {
 }
 
 /**
+ * 13位时间转12位
+ * @param $time
+ * @return float|int
+ */
+if (!function_exists('strToDate')) {
+    function strToDate($time): float|int {
+        return (ceil($time / 1000));
+    }
+}
+
+/**
+ * @param $data
+ * @return string
+ */
+if (!function_exists('packNum')) {
+    function packNum($data) {
+        return \bin2hex(\pack('N', $data));
+    }
+}
+/**
  * 获取当前时间
  * @param string|int $time
  * @return string

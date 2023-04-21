@@ -16,6 +16,21 @@ class Way {
     }
 
     /**
+     * 目录静态文件可以被访问
+     * @param $path //访问路径
+     * @param $dir //目录
+     */
+    public static function fileRoute($path, $dir) {
+        \Webman\Route::any($path . '/[{name:.+}]', function (\support\Request $request, $name = '') use ($dir) {
+            $file = rtrim($dir, '/') . "/" . trim($name, '/');
+            if (!str_contains($name, '..') && !empty(is_file($file))) {
+                return response('')->withFile($file);
+            }
+            return workError();
+        });
+    }
+
+    /**
      * @param string $plugin
      * @param array|string $template
      * @param array $vars
