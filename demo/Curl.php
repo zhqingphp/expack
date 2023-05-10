@@ -4,7 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use zhqing\extend\Curl;
 
 
-$curl = Curl::url('https://ag.hga050.com/')//是否json提交
+$curl = Curl::url('https://ip138.com/')//是否json提交
 
 //是否json提交
 //->json() //可选 不设置则使用http_build_query提交
@@ -61,15 +61,15 @@ $curl = Curl::url('https://ag.hga050.com/')//是否json提交
     'type' => '代理模式:http|socks5或者自定',
     'auth' => '认证模式:basic|ntlm或者自定'
 ], false)
-
     //自定义curl
     //->curl(CURLOPT_TIMEOUT, 15)//可选|可连贯
 
     //执行访问
     ->exec();
 //调试信息
-echo $curl->debug();
-ps($curl->type());
+//$curl->debug();
+ps($curl->header());
+ts($curl->full());
 
 //返回状态码
 //var_dump($curl->code());

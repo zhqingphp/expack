@@ -99,6 +99,8 @@ class Way {
             $dir . '/js/jsencrypt.js',
             $dir . '/js/axios.min.js',
             $dir . '/js/Safety.js',
+            $dir . '/js/browser.js',
+            $dir . '/js/PassEn.js',
             $dir . '/js/Frame.js',
         ], $list);
         $body = '';
