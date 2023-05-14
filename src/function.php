@@ -1,4 +1,5 @@
 <?php
+
 if (!function_exists('ps')) {
     function ps($data, $type = true) {
         $content = '<pre>' . print_r($data, true) . '</pre>';
@@ -30,7 +31,6 @@ if (!function_exists('rs')) {
     function rs($data) {
         return response('<pre>' . print_r($data, true) . '</pre>');
     }
-
 }
 if (!function_exists('workError')) {
     function workError() {
@@ -165,5 +165,30 @@ if (!function_exists('getArr')) {
             }
         }
         return $data;
+    }
+}
+
+//开启跨域
+if (!function_exists('resCross')) {
+    function resCross(array $header = [], $type = ''): array {
+        $mime = ['xml' => ['Content-Type' => 'text/xml'], 'json' => ['Content-Type' => 'application/json']];
+        return array_merge((!empty($type) ? array_merge($header, ($mime[$type] ?? [])) : $header), [
+            'Access-Control-Allow-Credentials' => 'true',
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => '*',
+            'Access-Control-Allow-Headers' => 'Content-Type,Authorization,X-Requested-With,Accept,Origin,requesttype'
+        ]);
+    }
+}
+
+if (!function_exists('resCome')) {
+    function resCome($data, $msg = ''): array {
+        return ['code' => 200, 'data' => $data, 'msg' => $msg];
+    }
+}
+
+if (!function_exists('resErr')) {
+    function resErr($msg, $code = 400, $data = []): array {
+        return ['code' => $code, 'data' => $data, 'msg' => $msg];
     }
 }

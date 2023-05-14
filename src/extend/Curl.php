@@ -352,13 +352,13 @@ class Curl {
             }
             if (empty($type) || ($this->curlInfo['http_code'] ?? 0) == 200) {
                 if (!empty($success) && is_callable($success)) {
-                    $success($this->setData);
+                    $success($this->setData, $this);
                 }
                 return true;
             } else {
                 $this->body = $this->body ?: curl_error($curl);
                 if (!empty($error) && is_callable($error)) {
-                    $error($this->setData);
+                    $error($this->setData, $this);
                 }
                 return false;
             }
