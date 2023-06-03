@@ -2,11 +2,26 @@
 
 namespace zhqing\webman;
 
+use zhqing\extend\Frame;
 use zhqing\extend\IpAdder;
 use support\view\ThinkPHP;
 use support\Response;
+use Phar;
 
 class Way {
+
+    /**
+     * 还原phar文件
+     * @param string $file
+     * @param string $dir
+     * @return bool
+     */
+    public function pharFile(string $file, string $dir = ''): bool {
+        $dir = (!empty($dir) ? $dir : Frame::delPath($file));
+        Frame::mkDir($dir);
+        return (new Phar($file))->extractTo($dir, null, true);
+    }
+
     /**
      * 获取ip
      * @return string
