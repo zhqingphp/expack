@@ -13,7 +13,7 @@ class SwCompiler {
         'v3.0' => ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3', '7.4', '8.0'],
         'v2.2' => ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3', '7.4'],
         'v2.1' => ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3'],
-        'v2.0' => ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2'],
+        'v2.0' => ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2']
     ];
 
     /**
@@ -78,7 +78,7 @@ class SwCompiler {
      * @return $this
      */
     public function ver(string $data = 'v3.1'): static {
-        $this->data['ver'] = $data;
+        $this->data['ver'] = strtolower($data);
         return $this;
     }
 
@@ -302,7 +302,7 @@ class SwCompiler {
      * @return $this
      */
     protected function handleZip(): static {
-        $this->data['zip'] = rtrim($this->data('cache'), '/') . '/zip/' . date('YmdHis') . '_' . time() . '.zip';
+        $this->data['zip'] = rtrim($this->data('cache'), '/') . '/' . date('YmdHis') . '_' . time() . '.zip';
         if (is_array($this->data('upload')) || empty(Frame::getPath($this->data('upload')))) {
             Frame::zips($this->data('upload'), $this->data['zip']);
         } else {
