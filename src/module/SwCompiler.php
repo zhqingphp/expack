@@ -193,11 +193,12 @@ class SwCompiler {
 
     /**
      * 执行
-     * @param bool $type //是否保存加密文件
+     * @param string $file //加密文件保存路径
      * @return array
      */
-    public function exec(bool $type = false): array {
+    public function exec(string $file): array {
         $this->data['code'] = 300;
+        $this->data['save'] = $file;
         $this->data['msg'] = '请设置要加密的文件';
         if (!empty($this->data('upload'))) {
             $this->data['cache'] = rtrim($this->data('dir'), '/') . '/' . substr(md5($this->data('user')), 8, 16);
@@ -205,9 +206,6 @@ class SwCompiler {
         }
         if (empty($this->data('saveUploadFile')) && is_file($this->data('zip'))) {
             @unlink($this->data('zip'));
-        }
-        if (empty($type) && is_file($this->data('gz'))) {
-            @unlink($this->data('gz'));
         }
         return $this->res();
     }
@@ -221,10 +219,12 @@ class SwCompiler {
         if (empty(is_file($this->data('zip')))) {
             $this->data['code'] = 300;
             $this->data['msg'] = '上传文件不存在';
+        } else if (empty($this->data('save')) || empty(is_string($this->data('save')))) {
+            $this->data['code'] = 300;
+            $this->data['msg'] = '请设置保存位置';
         } else {
             $this->getCookie($type);
             if ($this->data('code') == 200) {
-                $delimiter = uniqid();
                 $data = [
                     'file' => $this->data('zip'),
                     'php_version' => $this->data('php', '8.0'),
@@ -239,10 +239,9 @@ class SwCompiler {
                     'agreement' => 'on'
                 ];
                 $curl = Curl::post($this->data('refer'), $data)
-                    ->multi(uniqid())
+                    ->multi(('----WebKitFormBoundary' . Frame::randStr(16)))
                     ->referer(trim($this->data('refer'), '/') . '/encryptor/index?version=' . $this->data('ver'))
                     ->path('/encryptor/index?version=' . $this->data('ver'))
-                    ->setHead(['Content-Type' => 'multipart/form-data;boundary=' . $delimiter])
                     ->cookie($this->data('cookie'))
                     ->timeConnect(8)
                     ->timeOut(8)
@@ -265,13 +264,13 @@ class SwCompiler {
                         }
                     } else {
                         $file = trim(Frame::delPath(basename($this->data('zip'))) . '.tar.gz');
-                        $this->data['gz'] = rtrim($this->data('cache'), '/') . '/gz/' . $file;
-                        Frame::mkDir(dirname($this->data['gz']));
-                        @file_put_contents($this->data['gz'], $curl->body());
+                        $gzFile = rtrim($this->data['save'], '/') . '/' . $file;
+                        Frame::mkDir(dirname($gzFile));
+                        @file_put_contents($gzFile, $curl->body());
                         $this->data['msg'] = '成功加密';
                         $this->data['code'] = 200;
                         $this->data['head'] = ['Content-Type' => 'application/octet-stream', 'Content-Disposition' => 'attachment;filename="' . $file . '"'];
-                        $this->data['data'] = base64_encode($curl->body());
+                        $this->data['data'] = $gzFile;
                     }
                 }
             }
@@ -284,7 +283,7 @@ class SwCompiler {
      * @return $this
      */
     protected function handleZip(): static {
-        $this->data['zip'] = rtrim($this->data('cache'), '/') . '/zip/' . time() . '.zip';
+        $this->data['zip'] = rtrim($this->data('cache'), '/') . '/zip/' . date('Ymd') . '_' . time() . '.zip';
         if (is_array($this->data('upload')) || empty(Frame::getPath($this->data('upload')))) {
             Frame::zips($this->data('upload'), $this->data['zip']);
         } else {
