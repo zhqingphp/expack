@@ -8,14 +8,21 @@ use zhqing\extend\Safe;
 
 class SwCompiler {
     protected array $data = [];
+    protected array $var = [
+        'v3.1' => ['7.2', '7.3', '7.4', '8.0', '8.1'],
+        'v3.0' => ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3', '7.4', '8.0'],
+        'v2.2' => ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3', '7.4'],
+        'v2.1' => ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3'],
+        'v2.0' => ['5.4', '5.5', '5.6', '7.0', '7.1', '7.2'],
+    ];
 
     /**
      * 设置帐号密码
-     * @param $user
-     * @param $pass
+     * @param string $user
+     * @param string $pass
      * @return static
      */
-    public static function user($user, $pass): static {
+    public static function user(string $user, string $pass): static {
         $self = new self();
         $self->data = [
             'errHits' => 2,//出错次数
@@ -26,6 +33,7 @@ class SwCompiler {
             'dir' => __DIR__ . '/../../file/swoole/compiler',//文件保存目录
             'user' => $user,//帐号
             'pass' => $pass,//密码
+            'php' => '7.2',
             'code' => 200,//默认正常
             'msg' => '',//出错信息
             'data' => '',//返回数据
@@ -36,50 +44,50 @@ class SwCompiler {
 
     /**
      * 设置文件保存目录
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function dir($data): static {
-        $this->data['dir'] = $data;
+    public function dir(string $data = ''): static {
+        $this->data['dir'] = (!empty($data) ? $data : $this->data['dir']);
         return $this;
     }
 
     /**
      * 设置登录网站
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function url($data): static {
-        $this->data['url'] = $data;
+    public function url(string $data = ''): static {
+        $this->data['url'] = (!empty($data) ? $data : $this->data['url']);
         return $this;
     }
 
     /**
      * 设置来路网址
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function refer($data): static {
-        $this->data['refer'] = $data;
+    public function refer(string $data = ''): static {
+        $this->data['refer'] = (!empty($data) ? $data : $this->data['refer']);
         return $this;
     }
 
     /**
      * 设置Compiler版本
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function ver($data): static {
+    public function ver(string $data = 'v3.1'): static {
         $this->data['ver'] = $data;
         return $this;
     }
 
     /**
      * 出错多少次后不再登录
-     * @param $data
+     * @param int $data
      * @return $this
      */
-    public function errHits($data): static {
+    public function errHits(int $data = 2): static {
         $this->data['errHits'] = $data;
         return $this;
     }
@@ -101,20 +109,20 @@ class SwCompiler {
 
     /**
      * 设置php版本
-     * @param $data (7.2,7.3,7.4,8.0,8.1)
+     * @param string $data
      * @return $this
      */
-    public function php($data): static {
+    public function php(string $data = '7.2'): static {
         $this->data['php'] = $data;
         return $this;
     }
 
     /**
      * 项目名称(格式为小于10位的英文字母和数字的组合)
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function name($data): static {
+    public function name(string $data = ''): static {
         $this->data['name'] = $data;
         return $this;
     }
@@ -122,40 +130,40 @@ class SwCompiler {
     /**
      * 不加密的PHP文件或者文件夹的相对地址(如有多个地址请使用英文逗号进行分隔
      * 相对地址为相对于需要加密的代码的根目录),类似格式: vendor/composer,resource/view
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function exclude($data): static {
+    public function exclude(string $data = ''): static {
         $this->data['exclude'] = $data;
         return $this;
     }
 
     /**
      * 授权终止时间，限制加密后代码可用时间(Unix时间戳格式，默认为永久可用)
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function time($data): static {
+    public function time(string $data = ''): static {
         $this->data['time'] = $data;
         return $this;
     }
 
     /**
      * 运行加密后代码的服务器MAC地址 (如有多个MAC地址请使用英文逗号进行分隔,默认为不限制MAC地址)
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function add($data): static {
+    public function add(string $data = ''): static {
         $this->data['add'] = $data;
         return $this;
     }
 
     /**
      * 运行加密后代码的服务器内网IP地址 (如有多个IP地址请使用英文逗号进行分隔,默认为不限制IP地址)
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function ip($data): static {
+    public function ip(string $data = ''): static {
         $this->data['ip'] = $data;
         return $this;
     }
@@ -163,10 +171,10 @@ class SwCompiler {
     /**
      * 运行加密后代码的服务器HOST (如有多个HOST请使用英文逗号进行分隔,默认为不限制HOST)
      * 支持 * 前缀,例如 *.swoole.com 代表允许所有 swoole.com 的二级域名运行加密文件
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function host($data): static {
+    public function host(string $data = ''): static {
         $this->data['host'] = $data;
         return $this;
     }
@@ -174,20 +182,20 @@ class SwCompiler {
     /**
      * 自定义信息(如有多个自定义信息请使用英文分号进行分隔，否则此选项请留空)
      * 自定义信息可通过在代码中使用 swoole_get_license() 函数获取，一般自定义信息为简单的键值对
-     * @param $data
+     * @param string $data
      * @return $this
      */
-    public function config($data): static {
+    public function config(string $data = ''): static {
         $this->data['config'] = $data;
         return $this;
     }
 
     /**
      * 是否保留代码注释(0=不保留,1=保留)（某些框架如 Laravel/Hyperf 程序逻辑需要依赖注释）
-     * @param $data
+     * @param int $data
      * @return $this
      */
-    public function comments($data): static {
+    public function comments(int $data = 0): static {
         $this->data['comments'] = $data;
         return $this;
     }
@@ -198,15 +206,24 @@ class SwCompiler {
      * @return array
      */
     public function exec(string $file): array {
-        $this->data['code'] = 300;
-        $this->data['save'] = $file;
-        $this->data['msg'] = '请设置要加密的文件';
-        if (!empty($this->data('upload'))) {
-            $this->data['cache'] = rtrim($this->data('dir'), '/') . '/' . substr(md5($this->data('user')), 8, 16);
-            $this->handleZip()->encrypt();
-        }
-        if (empty($this->data('saveUploadFile')) && is_file($this->data('zip'))) {
-            @unlink($this->data('zip'));
+        if (empty($varArr = Frame::getStrArr($this->var, $this->data('ver', 'v3.1')))) {
+            $this->data['code'] = 302;
+            $this->data['msg'] = '加密版本仅支持:' . join(',', array_keys($this->var));
+        } else if (empty(in_array($this->data('php'), $varArr))) {
+            $this->data['code'] = 303;
+            $this->data['msg'] = '加密版本' . $this->data('ver', 'v3.1') . '仅支持PHP:' . join(',', $varArr);
+        } else {
+            if (!empty($this->data('upload'))) {
+                $this->data['save'] = $file;
+                $this->data['cache'] = rtrim($this->data('dir'), '/') . '/' . substr(md5($this->data('user')), 8, 16);
+                $this->handleZip()->encrypt();
+            } else {
+                $this->data['code'] = 304;
+                $this->data['msg'] = '请设置要加密的文件';
+            }
+            if (empty($this->data('saveUploadFile')) && is_file($this->data('zip'))) {
+                @unlink($this->data('zip'));
+            }
         }
         return $this->res();
     }
@@ -218,10 +235,10 @@ class SwCompiler {
      */
     protected function encrypt(bool $type = false): static {
         if (empty(is_file($this->data('zip')))) {
-            $this->data['code'] = 300;
+            $this->data['code'] = 305;
             $this->data['msg'] = '上传文件不存在';
         } else if (empty($this->data('save')) || empty(is_string($this->data('save')))) {
-            $this->data['code'] = 300;
+            $this->data['code'] = 306;
             $this->data['msg'] = '请设置保存位置';
         } else {
             $this->getCookie($type);
@@ -252,7 +269,7 @@ class SwCompiler {
                     return $this->encrypt(true);
                 } else {
                     if (!empty(Frame::strIn($curl->body(), '<title>'))) {
-                        $this->data['code'] = 301;
+                        $this->data['code'] = 307;
                         $this->data['msg'] = '提交数据错误';
                         $this->data['data'] = $data;
                         $arr = explode('<i class="fa fa-check-square-o"></i>', $curl->body());
@@ -264,13 +281,14 @@ class SwCompiler {
                             }
                         }
                     } else {
-                        $file = trim(Frame::delPath(basename($this->data('zip'))) . '.tar.gz');
+                        $ver = $this->data('ver', 'v3.1') . '_' . $this->data('php', '7.2');
+                        $file = $ver . '_' . trim(Frame::delPath(basename($this->data('zip'))) . '.tar.gz');
                         $gzFile = rtrim($this->data['save'], '/') . '/' . $file;
                         Frame::mkDir(dirname($gzFile));
                         @file_put_contents($gzFile, $curl->body());
-                        $this->data['msg'] = '成功加密';
+                        $this->data['msg'] = '加密成功(' . $ver . ')';
                         $this->data['code'] = 200;
-                        $this->data['head'] = ['Content-Type' => 'application/octet-stream', 'Content-Disposition' => 'attachment;filename="' . $file . '"'];
+                        $this->data['head'] = ['Content-Type' => 'application/octet-stream', 'Content-Disposition' => 'attachment;filename="' . $ver . '_' . seekTime() . '.tar.gz"'];
                         $this->data['data'] = $gzFile;
                     }
                 }
@@ -307,7 +325,7 @@ class SwCompiler {
             $this->data['data'] = '';
             $this->data['cookie'] = Frame::isJson(Safe::movDe(Frame::getStrArr($data, 'cookie', [])));
             if (Frame::getStrArr($data, 'userHits', 0) >= $this->data('errHits', 2)) {
-                $this->data['code'] = 444;
+                $this->data['code'] = 301;
                 $this->data['msg'] = '出错次数已达到' . $this->data('errHits', 2) . '次';
                 $this->data['data'] = '';
                 $this->data['cookie'] = [];
