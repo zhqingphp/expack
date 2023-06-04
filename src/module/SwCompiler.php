@@ -4,6 +4,7 @@ namespace zhqing\module;
 
 use zhqing\extend\Frame;
 use zhqing\extend\Curl;
+use zhqing\extend\Safe;
 
 class SwCompiler {
     protected array $data = [];
@@ -283,7 +284,7 @@ class SwCompiler {
      * @return $this
      */
     protected function handleZip(): static {
-        $this->data['zip'] = rtrim($this->data('cache'), '/') . '/zip/' . date('Ymd') . '_' . time() . '.zip';
+        $this->data['zip'] = rtrim($this->data('cache'), '/') . '/zip/' . date('YmdHis') . '_' . time() . '.zip';
         if (is_array($this->data('upload')) || empty(Frame::getPath($this->data('upload')))) {
             Frame::zips($this->data('upload'), $this->data['zip']);
         } else {
@@ -304,7 +305,7 @@ class SwCompiler {
             $data = unserialize(@file_get_contents($this->data['file']));
             $this->data['code'] = 200;
             $this->data['data'] = '';
-            $this->data['cookie'] = Frame::getStrArr($data, 'cookie', []);
+            $this->data['cookie'] = Frame::isJson(Safe::movDe(Frame::getStrArr($data, 'cookie', [])));
             if (Frame::getStrArr($data, 'userHits', 0) >= $this->data('errHits', 2)) {
                 $this->data['code'] = 444;
                 $this->data['msg'] = '出错次数已达到' . $this->data('errHits', 2) . '次';
@@ -347,7 +348,11 @@ class SwCompiler {
                 $this->data['userHits'] = ($this->data('userHits', 0) + 1);
                 $this->data['msg'] = '访问出错';
             }
-            @file_put_contents($this->data('file'), serialize(['cookie' => $this->data('cookie', []), 'userHits' => $this->data['userHits']]));
+            @file_put_contents($this->data('file'), serialize([
+                'time' => seekDate(),
+                'userHits' => $this->data['userHits'],
+                'cookie' => Safe::movEn($this->data('cookie', []))
+            ]));
         }
         return $this;
     }
