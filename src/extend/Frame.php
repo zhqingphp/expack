@@ -361,7 +361,7 @@ class Frame {
         $url = \str_contains($url, '&') ? \substr($url, 0, \strpos($url, '&')) : $url;
         $url = \str_contains($url, '#') ? \substr($url, 0, \strpos($url, '#')) : $url;
         $url = trim(trim($url, '/'));
-        return (!empty($url) ? ($url != $default ? Frame::strRep($url, '//', '/') : '/') : $default);
+        return (!empty($url) ? ($url != $default ? self::strRep($url, '//', '/') : '/') : $default);
     }
 
     /**
@@ -554,5 +554,90 @@ class Frame {
         }
         $size_name = array(" Bytes", " KB", " MB", " GB", " TB", " PB", " EB", " ZB", " YB");
         return round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . $size_name[$i];
+    }
+
+    /**
+     * @param string $multi
+     * @param array $data
+     * @param string $body
+     * @param string $path
+     * @return string
+     */
+    public static function formData(string $multi, array $data, string $body = '', string $path = ''): string {
+        $i = !empty($i) ? $i : 0;
+        $ov = !empty($ov) ? $ov : count($data);
+        foreach ($data as $k => $v) {
+            if (empty($path)) {
+                $name = $k;
+                $i = $i + 1;
+            } else {
+                $name = $path . "[" . $k . "]";
+            }
+            if (is_array($v)) {
+                $body = self::formData($multi, $v, $body, $name);
+            } else {
+                $body .= "--{$multi}\r\n";
+                if (is_file($v)) {
+                    $body .= "Content-Disposition:form-data;name=\"{$name}\";";
+                    $body .= "filename=\"" . basename($v) . "\"\r\n";
+                    $body .= "Content-Type: " . self::getMime(self::getPath($v)) . "\r\n\r\n";
+                    $body .= "" . (@file_get_contents($v)) . "\r\n";
+                } else {
+                    $body .= "Content-Disposition:form-data;";
+                    $body .= "name=\"{$name}\"\r\n\r\n{$v}\r\n";
+                }
+            }
+        }
+        $body .= (($ov == $i) ? "--{$multi}--\r\n" : "");
+        return $body;
+    }
+
+    /**
+     * php 解析 multipart/form-data
+     * @param string $data
+     * @param string $header
+     * @param array $array
+     * @return array
+     */
+    public static function getFormData(string $data, string $header = '', array $array = []): array {
+        if (!empty($header)) {
+            preg_match('/boundary=(.*)$/', $header, $matches);
+            $boundary = $matches[1] ?? '';
+        }
+        if (empty($boundary)) {
+            $head = explode("\r\n", $data);
+            $boundary = self::strRep($head[key($head)], '-');
+        }
+        if (!empty($boundary)) {
+            $a_blocks = preg_split("/-+$boundary/", $data);
+            array_pop($a_blocks);
+            foreach ($a_blocks as $block) {
+                if (!empty($block)) {
+                    if (str_contains(strtolower($block), 'content-type') || str_contains(strtolower($block), 'content_type')) {
+                        preg_match("/name\=(\'|\")(.*?)(\'|\")(.*?)\=(\'|\")(.*?)(\'|\")[\n|\r]+([^\n\r].*)?\r$/s", $block, $arr);
+                        if (isset($arr[2]) && isset($arr[6]) && isset($arr[8])) {
+                            $vs = explode("\r\n\r\n", $arr[8]);
+                            $body = trim(trim(trim($vs[1], "\r"), "\n"));
+                            $suffix = self::getPath($arr[6]);
+                            $array['__FILES__'][$arr[2]] = [
+                                'file' => $arr[6],
+                                'suffix' => $suffix,
+                                'mime' => self::getMime($suffix),
+                                'size' => strlen($body),
+                                'data' => $body,
+                            ];
+                        }
+                        preg_match("/name(.*?)(\'|\")(.*?)(\'|\")/i", $block, $matches);
+                        preg_match("/filename(.*?)(\'|\")(.*?)(\'|\")/i", $block, $matche);
+                        $arr = explode("\r\n\r\n", $block);
+
+                    } else {
+                        preg_match('/name=\"([^\"]*)\"[\n|\r]+([^\n\r].*)?\r$/s', $block, $matches);
+                        $array[$matches[1]] = $matches[2];
+                    }
+                }
+            }
+        }
+        return $array;
     }
 }

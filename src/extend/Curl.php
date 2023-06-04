@@ -627,7 +627,7 @@ class Curl {
             $this->curlSet[CURLOPT_POST] = true;
         }
         if (!empty($multi = ($this->setData['multi'] ?? ''))) {
-            $data = $this->formData($multi, $this->setData['data']);
+            $data = Frame::formData($multi, $this->setData['data']);
             $this->curlSet[CURLOPT_POSTFIELDS] = $data;
             $this->setHead([
                 'Content-Length' => strlen($data),
@@ -746,30 +746,6 @@ class Curl {
             }
         }
         return $this;
-    }
-
-    /**
-     * @param string $delimiter
-     * @param array $data
-     * @param string $body
-     * @param string $path
-     * @return string
-     */
-    protected function formData(string $delimiter, array $data, string $body = '', string $path = ''): string {
-        foreach ($data as $k => $v) {
-            if (is_array($v)) {
-                $body .= $this->formData($delimiter, $v, $body, $k);
-            } else {
-                $name = !empty($path) ? ($path . '[' . $v . ']') : $k;
-                if (is_file($v)) {
-                    $body .= "--{$delimiter}\r\nContent-Disposition:form-data;name=\"{$name}\";filename=\"" . basename($v) . "\"\t\nContent-Type: " . Frame::getMime(Frame::getPath($v)) . "\r\n\r\n" . (@file_get_contents($v)) . "\r\n";
-                } else {
-                    $body .= "--{$delimiter}\r\nContent-Disposition:form-data;name=\"{$name}\"\r\n\r\n{$v}\r\n";
-                }
-            }
-        }
-        $body .= "--{$delimiter}--\r\n";
-        return $body;
     }
 
     /**
