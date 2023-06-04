@@ -5,6 +5,45 @@ namespace zhqing\extend\frame;
 use ZipArchive;
 
 trait Decompression {
+
+    /**
+     * 把文件夹打包成zip
+     * @param array|string $path //要打包的目录
+     * @param string $file //zip存放路径
+     * @return mixed
+     */
+    public static function zips(array|string $path, string $file): mixed {
+        self::mkDir(dirname($file));
+        $zip = new ZipArchive();
+        $res = $zip->open($file, ZipArchive::CREATE);
+        if (is_array($path)) {
+            foreach ($path as $v) {
+                self::addFileToZips(rtrim($v, '/'), $zip, rtrim($v, '/'));
+            }
+        } else {
+            self::addFileToZips(rtrim($path, '/'), $zip, rtrim($path, '/'));
+        }
+        return $res;
+    }
+
+    /**
+     * @param $path
+     * @param $zip
+     * @param $dir
+     */
+    public static function addFileToZips($path, $zip, $dir) {
+        $handler = opendir($path);
+        while (($filename = readdir($handler)) !== false) {
+            if ($filename != "." && $filename != "..") {
+                if (is_dir($path . "/" . $filename)) {
+                    self::addFileToZips($path . "/" . $filename, $zip, $dir);
+                } else {
+                    $zip->addFile($path . "/" . $filename, self::strRep($path . "/" . $filename, rtrim(dirname($dir), '/')));
+                }
+            }
+        }
+    }
+
     /**
      * 把字符串添加至GZ文件
      * @param string $str //字符串

@@ -228,6 +228,16 @@ class Curl {
     }
 
     /**
+     * 提交multipart/form-data;boundary=
+     * @param string $data
+     * @return $this
+     */
+    public function multi(string $data = ''): static {
+        $this->setData['multi'] = (!empty($data) ? $data : uniqid());
+        return $this;
+    }
+
+    /**
      * 设置转换编码
      * @param string|null $to
      * @param string|null $from
@@ -616,29 +626,38 @@ class Curl {
         if ($mode == 'POST') {
             $this->curlSet[CURLOPT_POST] = true;
         }
-        //数据提交方式
-        if (!empty($this->setData['form'])) {
-            if (!empty($file = ($this->setData['file'] ?? []))) {
-                foreach ($file as $k => $v) {
-                    $this->setData['data'][$k] = new \CURLFile(\realpath($v));
-                }
-            }
-            if (!empty($this->setData['data'] ?? '')) {
-                //json提交
-                if (($this->setData['json'] ?? false)) {
-                    $json = self::arrJson($this->setData['data']);
-                    $data = !empty($json) ? $json : $this->setData['data'];
-                    $this->setData['data'] = $data;
-                    $this->setHead(['Content-Type' => 'application/json', 'Content-Length' => strlen($data)]);
-                } else {
-                    //为数组时提交
-                    if (is_array($this->setData['data'])) {
-                        $data = http_build_query($this->setData['data']);
-                        $this->setData['data'] = $data;
-                        $this->setHead(['Content-Length' => strlen($data)]);
+        if (!empty($multi = ($this->setData['multi'] ?? ''))) {
+            $data = $this->formData($multi, $this->setData['data']);
+            $this->curlSet[CURLOPT_POSTFIELDS] = $data;
+            $this->setHead([
+                'Content-Length' => strlen($data),
+                'Content-Type' => 'multipart/form-data;boundary=' . $multi
+            ]);
+        } else {
+            //数据提交方式
+            if (!empty($this->setData['form'])) {
+                if (!empty($file = ($this->setData['file'] ?? []))) {
+                    foreach ($file as $k => $v) {
+                        $this->setData['data'][$k] = new \CURLFile(\realpath($v));
                     }
                 }
-                $this->curlSet[CURLOPT_POSTFIELDS] = $this->setData['data'];
+                if (!empty($this->setData['data'] ?? '')) {
+                    //json提交
+                    if (($this->setData['json'] ?? false)) {
+                        $json = self::arrJson($this->setData['data']);
+                        $data = !empty($json) ? $json : $this->setData['data'];
+                        $this->setData['data'] = $data;
+                        $this->setHead(['Content-Type' => 'application/json', 'Content-Length' => strlen($data)]);
+                    } else {
+                        //为数组时提交
+                        if (is_array($this->setData['data'])) {
+                            $data = http_build_query($this->setData['data']);
+                            $this->setData['data'] = $data;
+                            $this->setHead(['Content-Length' => strlen($data)]);
+                        }
+                    }
+                    $this->curlSet[CURLOPT_POSTFIELDS] = $this->setData['data'];
+                }
             }
         }
         //是否ajax提交
@@ -727,6 +746,30 @@ class Curl {
             }
         }
         return $this;
+    }
+
+    /**
+     * @param string $delimiter
+     * @param array $data
+     * @param string $body
+     * @param string $path
+     * @return string
+     */
+    protected function formData(string $delimiter, array $data, string $body = '', string $path = ''): string {
+        foreach ($data as $k => $v) {
+            if (is_array($v)) {
+                $body .= $this->formData($delimiter, $v, $body, $k);
+            } else {
+                $name = !empty($path) ? ($path . '[' . $v . ']') : $k;
+                if (is_file($v)) {
+                    $body .= "--{$delimiter}\r\nContent-Disposition:form-data;name=\"{$name}\";filename=\"" . basename($v) . "\"\t\nContent-Type: " . Frame::getMime(Frame::getPath($v)) . "\r\n\r\n" . (@file_get_contents($v)) . "\r\n";
+                } else {
+                    $body .= "--{$delimiter}\r\nContent-Disposition:form-data;name=\"{$name}\"\r\n\r\n{$v}\r\n";
+                }
+            }
+        }
+        $body .= "--{$delimiter}--\r\n";
+        return $body;
     }
 
     /**
