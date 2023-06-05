@@ -33,7 +33,7 @@ class SwCompiler {
             'dir' => __DIR__ . '/../../file/swoole/compiler',//文件保存目录
             'user' => $user,//帐号
             'pass' => $pass,//密码
-            'php' => '7.2',
+            'php' => '8.1',
             'code' => 200,//默认正常
             'msg' => '',//出错信息
             'data' => '',//返回数据
@@ -112,7 +112,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function php(string $data = '7.2'): static {
+    public function php(string $data = '8.1'): static {
         $this->data['php'] = $data;
         return $this;
     }
@@ -281,7 +281,7 @@ class SwCompiler {
                             }
                         }
                     } else {
-                        $ver = $this->data('ver', 'v3.1') . '_' . $this->data('php', '7.2');
+                        $ver = $this->data('ver', 'v3.1') . '_' . $this->data('php', '8.1');
                         $file = $ver . '_' . trim(Frame::delPath(basename($this->data('zip'))) . '.tar.gz');
                         $gzFile = rtrim($this->data['save'], '/') . '/' . $file;
                         Frame::mkDir(dirname($gzFile));
