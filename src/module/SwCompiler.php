@@ -203,9 +203,10 @@ class SwCompiler {
     /**
      * 执行
      * @param string $file //加密文件保存路径
+     * @param bool $type //是否解压
      * @return array
      */
-    public function exec(string $file): array {
+    public function exec(string $file, bool $type = false): array {
         if (empty($varArr = Frame::getStrArr($this->var, $this->data('ver', 'v3.1')))) {
             $this->data['code'] = 302;
             $this->data['msg'] = '加密版本仅支持:' . join(',', array_keys($this->var));
@@ -225,7 +226,47 @@ class SwCompiler {
                 @unlink($this->data('zip'));
             }
         }
-        return $this->res();
+        return $this->unzip($type)->res();
+    }
+
+    /**
+     * @param $type
+     * @return $this
+     */
+    public function unzip($type): static {
+        $this->data['unzip'] = ['type' => $type, 'status' => false];
+        if (!empty($type) && $this->data('code') == 200 && !empty($file = $this->data('data'))) {
+            $dir = rtrim(dirname($file)) . '/encrypt';
+            Frame::mkDir($dir);
+            exec("tar -xf $file -C $dir");
+            if (!empty($array = $this->data('upload')) && is_array($array)) {
+                $arr = [];
+                foreach ($array as $v) {
+                    $arr[] = trim(basename($v));
+                }
+                $data = Frame::getDirList($dir);
+                $i = 0;
+                Frame::delDirFile(rtrim(dirname($file)) . '/online');
+                foreach ($data as $k => $v) {
+                    $val = explode('/', trim($k, '/'));
+                    if (in_array(join('', array_slice($val, 1, 1)), $arr)) {
+                        $newFile = rtrim(dirname($file)) . '/online/' . trim(join('/', array_slice($val, 1)), '/');
+                        Frame::mkDir(dirname($newFile));
+                        if (!empty(Frame::copyFile($v, $newFile))) {
+                            ++$i;
+                            @unlink($v);
+                        }
+                    }
+                }
+                if ($i == count($data)) {
+                    $this->data['unzip'] = ['type' => $type, 'status' => true];
+                    Frame::delNullDir($dir);
+                    @rmdir($dir);
+                    @unlink($file);
+                }
+            }
+        }
+        return $this;
     }
 
     /**
@@ -389,6 +430,6 @@ class SwCompiler {
      * @return array
      */
     protected function res(): array {
-        return array_merge(['code' => $this->data('code'), 'data' => $this->data('data'), 'msg' => $this->data('msg')], (!empty($this->data('head')) ? ['header' => $this->data('head')] : []));
+        return array_merge(['code' => $this->data('code'), 'data' => $this->data('data'), 'unzip' => $this->data('unzip'), 'msg' => $this->data('msg')], (!empty($this->data('head')) ? ['header' => $this->data('head')] : []));
     }
 }
