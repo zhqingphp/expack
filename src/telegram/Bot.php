@@ -7,6 +7,11 @@ use zhqing\extend\Curl;
 /**
  * 机器人接口
  * https://core.telegram.org/bots/api
+ * BotFather 的对话框：https://t.me/botfather
+ * 创建机器人：/newbot
+ * 设置漫游器隐私：/setprivacy. 选择：Disable
+ * 创建游戏：/newgame
+ * 内联模式： /setinline
  */
 class Bot {
     public string $url = 'https://api.telegram.org/';
@@ -51,10 +56,11 @@ class Bot {
      * 接收数据,使用前要删除WebHook
      * 使用此方法通过长轮询接收传入的更新 (wiki)。返回更新对象的数组。
      * https://core.telegram.org/bots/api#getupdates
+     * @param array $data
      * @return $this
      */
-    public function getUpdates(): static {
-        return $this->send('getUpdates');
+    public function getUpdates(array $data = []): static {
+        return $this->send('getUpdates', $data);
     }
 
     /**
