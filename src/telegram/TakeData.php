@@ -48,10 +48,18 @@ class TakeData {
     }
 
     /**
+     * 获取message
+     * @return mixed
+     */
+    public function message(): mixed {
+        return $this->get('message');
+    }
+
+    /**
      * 发送消息的人的ID
      * @return mixed
      */
-    public function MessageFromId(): mixed {
+    public function message_from_id(): mixed {
         return $this->get('message.from.id');
     }
 
@@ -59,7 +67,7 @@ class TakeData {
      * 消息ID，回复或者转发的时候可以用到
      * @return mixed
      */
-    public function MessageMessageId(): mixed {
+    public function message_message_id(): mixed {
         return $this->get('message.message_id');
     }
 
@@ -67,7 +75,7 @@ class TakeData {
      * 收到的信息
      * @return mixed
      */
-    public function MessageText(): mixed {
+    public function message_text(): mixed {
         return $this->get('message.text');
     }
 
@@ -83,7 +91,7 @@ class TakeData {
      * 用户昵称
      * @return mixed
      */
-    public function MessageFromFirstName(): mixed {
+    public function message_from_first_name(): mixed {
         return $this->get('message.from.first_name');
     }
 
@@ -91,7 +99,7 @@ class TakeData {
      * 语言
      * @return mixed
      */
-    public function MessageFromLangCode(): mixed {
+    public function message_from_language_code(): mixed {
         return $this->get('message.from.language_code');
     }
 
@@ -100,7 +108,7 @@ class TakeData {
      * 是否机器人,true=机器人
      * @return mixed
      */
-    public function MessageFromIsBot(): mixed {
+    public function message_from_is_bot(): mixed {
         return $this->get('message.from.is_bot');
     }
 
@@ -108,49 +116,49 @@ class TakeData {
      * 所在群的ID，如果是个人发送给你的私信，则是个人ID  回复消息时候可以用到
      * @return mixed
      */
-    public function MessageChatId(): mixed {
+    public function message_chat_id(): mixed {
         return $this->get('message.chat.id');
     }
 
     /**
      * @return mixed
      */
-    public function CallbackQuery(): mixed {
+    public function callback_query(): mixed {
         return $this->get('callback_query');
     }
 
     /**
      * @return mixed
      */
-    public function CallbackQueryId(): mixed {
+    public function callback_query_id(): mixed {
         return $this->get('callback_query.id');
     }
 
     /**
      * @return mixed
      */
-    public function CallbackQueryData(): mixed {
+    public function callback_query_data(): mixed {
         return $this->get('callback_query.data');
     }
 
     /**
      * @return mixed
      */
-    public function CallbackQueryMessage(): mixed {
+    public function callback_query_message(): mixed {
         return $this->get('callback_query.message');
     }
 
     /**
      * @return mixed
      */
-    public function CallbackQueryMessageChatId(): mixed {
+    public function callback_query_message_chat_id(): mixed {
         return $this->get('callback_query.message.chat.id');
     }
 
     /**
      * @return mixed
      */
-    public function CallbackQueryMessageFromId(): mixed {
+    public function callback_query_message_from_id(): mixed {
         return $this->get('callback_query.message.from.id');
     }
 
@@ -159,7 +167,7 @@ class TakeData {
      * 群新成员列表
      * @return mixed
      */
-    public function MessageNewChatMembers(): mixed {
+    public function message_new_chat_members(): mixed {
         return $this->get('message.new_chat_members');
     }
 
@@ -168,7 +176,7 @@ class TakeData {
      * 群新成员ID
      * @return mixed
      */
-    public function MessageNewChatPartIcIpAntId(): mixed {
+    public function message_new_chat_participant_id(): mixed {
         return $this->get('message.new_chat_participant.id');
     }
 
@@ -177,7 +185,7 @@ class TakeData {
      * 群新成员用户名
      * @return mixed
      */
-    public function MessageNewChatPartIcIpAntUserName(): mixed {
+    public function message_new_chat_participant_username(): mixed {
         return $this->get('message.new_chat_participant.username');
     }
 
@@ -186,7 +194,7 @@ class TakeData {
      * 群新成员昵
      * @return mixed
      */
-    public function MessageNewChatPartIcIpAntFirstName(): mixed {
+    public function message_new_chat_participant_first_name(): mixed {
         return $this->get('message.new_chat_participant.first_name');
     }
 
@@ -195,7 +203,7 @@ class TakeData {
      * 群新成员称
      * @return mixed
      */
-    public function MessageNewChatPartIcIpAntLastName(): mixed {
+    public function message_new_chat_participant_last_name(): mixed {
         return $this->get('message.new_chat_participant.last_name');
     }
 
@@ -204,7 +212,7 @@ class TakeData {
      * 群新成员ID
      * @return mixed
      */
-    public function MessageNewChatMemberId(): mixed {
+    public function message_new_chat_member_id(): mixed {
         return $this->get('message.new_chat_member.id');
     }
 
@@ -213,7 +221,7 @@ class TakeData {
      * 群新成员用户名
      * @return mixed
      */
-    public function MessageNewChatMemberUserName(): mixed {
+    public function message_new_chat_member_username(): mixed {
         return $this->get('message.new_chat_member.username');
     }
 
@@ -222,7 +230,7 @@ class TakeData {
      * 群新成员昵
      * @return mixed
      */
-    public function MessageNewChatMemberFirstName(): mixed {
+    public function message_new_chat_member_first_name(): mixed {
         return $this->get('message.new_chat_member.first_name');
     }
 
@@ -231,7 +239,7 @@ class TakeData {
      * 群新成员称
      * @return mixed
      */
-    public function MessageNewChatMemberLastName(): mixed {
+    public function message_new_chat_member_last_name(): mixed {
         return $this->get('message.new_chat_member.last_name');
     }
 
@@ -240,7 +248,7 @@ class TakeData {
      * 删除群成员ID
      * @return mixed
      */
-    public function MessageLeftChatPartIcIpAntId(): mixed {
+    public function message_left_chat_participant_id(): mixed {
         return $this->get('message.left_chat_participant.id');
     }
 
@@ -249,7 +257,7 @@ class TakeData {
      * 删除群成员用户名
      * @return mixed
      */
-    public function MessageLeftChatPartIcIpAntUsername(): mixed {
+    public function message_left_chat_participant_username(): mixed {
         return $this->get('message.left_chat_participant.username');
     }
 
@@ -258,7 +266,7 @@ class TakeData {
      * 删除群成员昵
      * @return mixed
      */
-    public function MessageLeftChatPartIcIpAntFirstName(): mixed {
+    public function message_left_chat_participant_first_name(): mixed {
         return $this->get('message.left_chat_participant.first_name');
     }
 
@@ -267,7 +275,7 @@ class TakeData {
      * 删除群成员称
      * @return mixed
      */
-    public function MessageLeftChatPartIcIpAntLastName(): mixed {
+    public function message_left_chat_participant_last_name(): mixed {
         return $this->get('message.left_chat_participant.last_name');
     }
 
@@ -276,7 +284,7 @@ class TakeData {
      * 删除群成员ID
      * @return mixed
      */
-    public function MessageLeftChatMemberId(): mixed {
+    public function message_left_chat_member_id(): mixed {
         return $this->get('message.left_chat_member.id');
     }
 
@@ -285,7 +293,7 @@ class TakeData {
      * 删除群成员用户名
      * @return mixed
      */
-    public function MessageLeftChatMemberUsername(): mixed {
+    public function message_left_chat_member_username(): mixed {
         return $this->get('message.left_chat_member.username');
     }
 
@@ -294,7 +302,7 @@ class TakeData {
      * 删除群成员昵
      * @return mixed
      */
-    public function MessageLeftChatMemberFirstName(): mixed {
+    public function message_left_chat_member_first_name(): mixed {
         return $this->get('message.left_chat_member.first_name');
     }
 
@@ -303,7 +311,7 @@ class TakeData {
      * 删除群成员称
      * @return mixed
      */
-    public function MessageLeftChatMemberLastName(): mixed {
+    public function message_left_chat_member_last_name(): mixed {
         return $this->get('message.left_chat_member.last_name');
     }
 }
