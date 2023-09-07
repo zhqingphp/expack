@@ -128,6 +128,30 @@ class TakeData {
     }
 
     /**
+     * 游戏简称
+     * @return mixed
+     */
+    public function callback_query_game_short_name(): mixed {
+        return $this->get('callback_query.game_short_name');
+    }
+
+    /**
+     * 游戏名称
+     * @return mixed
+     */
+    public function callback_query_message_game_title(): mixed {
+        return $this->get('callback_query.message.game.title');
+    }
+
+    /**
+     * 游戏介绍
+     * @return mixed
+     */
+    public function callback_query_message_game_description(): mixed {
+        return $this->get('callback_query.message.game.description');
+    }
+
+    /**
      * @return mixed
      */
     public function callback_query_id(): mixed {
