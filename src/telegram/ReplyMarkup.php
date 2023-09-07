@@ -81,9 +81,9 @@ class ReplyMarkup extends Common {
      * https://core.telegram.org/bots/api#keyboardbutton
      * @param array $data
      * @param array $array
-     * @return static
+     * @return string
      */
-    public function replyKeyBoardMarKup(array $data, array $array = []): static {
+    public function replyKeyBoardMarKup(array $data, array $array = []): string {
         if (!empty($data)) {
             $arr['keyboard'] = [];
             foreach ($data as $k => $v) {
@@ -99,6 +99,6 @@ class ReplyMarkup extends Common {
             $arr['resize_keyboard'] = false;
             $arr['is_persistent'] = true;
         }
-        return $this->set('reply_markup', Frame::json(array_merge((!empty($arr) ? $arr : []), $array)));
+        return Frame::json(array_merge((!empty($arr) ? $arr : []), $array));
     }
 }
