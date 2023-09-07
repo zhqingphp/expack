@@ -37,7 +37,7 @@ class SendGame extends Common {
      * @return $this
      */
     public function game_short_name(string $data): static {
-        return $this->set('chat_id', $data);
+        return $this->set('game_short_name', $data);
     }
 
     /**

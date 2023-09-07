@@ -83,7 +83,7 @@ class ReplyMarkup extends Common {
      * @param array $array
      * @return string
      */
-    public function replyKeyBoardMarKup(array $data, array $array = []): string {
+    public static function replyKeyBoardMarKup(array $data, array $array = []): string {
         if (!empty($data)) {
             $arr['keyboard'] = [];
             foreach ($data as $k => $v) {
