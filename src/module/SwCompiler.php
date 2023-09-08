@@ -305,32 +305,47 @@ class SwCompiler {
                     ->timeConnect(8)
                     ->timeOut(8)
                     ->exec();
-                $header = strtolower($curl->header());
-                if (empty($curl->body()) || !empty(Frame::strIn($header, 'location'))) {
-                    return $this->encrypt(true);
-                } else {
-                    if (!empty(Frame::strIn($curl->body(), '<title>'))) {
-                        $this->data['code'] = 307;
-                        $this->data['msg'] = '提交数据错误';
-                        $this->data['data'] = $data;
-                        $arr = explode('<i class="fa fa-check-square-o"></i>', $curl->body());
-                        if (isset($arr[1])) {
-                            $array = explode('</h4>', $arr[1]);
-                            if (!empty($msg = trim(Frame::getStrArr($array, 0)))) {
-                                $this->data['code'] = 302;
-                                $this->data['msg'] = $msg;
-                            }
+                if ($curl->code() == 302) {
+                    $header = $curl->getHeadArr();
+                    $location = Frame::getStrArr($header, 'location');
+                    $task = explode('?task_id=', $location);
+                    if (!empty($taskId = Frame::getStrArr($task, 1))) {
+                        $get = Curl::get(trim($this->data('refer'), '/'))
+                            ->referer(trim($this->data('refer'), '/') . '/encryptor/task/')
+                            ->path('/encryptor/get_code/?id=' . $taskId)
+                            ->cookie($this->data('cookie'))
+                            ->timeConnect(8)
+                            ->timeOut(8)
+                            ->exec();
+                        if (!empty(Frame::strIn($get->header(), $taskId . '.'))) {
+                            $ver = $this->data('ver', 'v3.1') . '_' . $this->data('php', '8.1');
+                            $file = $ver . '_' . trim(Frame::delPath(basename($this->data('zip'))) . '.tar.gz');
+                            $gzFile = rtrim($this->data['save'], '/') . '/' . $file;
+                            Frame::mkDir(dirname($gzFile));
+                            @file_put_contents($gzFile, $get->body());
+                            $this->data['msg'] = '加密成功(' . $ver . ')';
+                            $this->data['code'] = 200;
+                            $this->data['head'] = ['Content-Type' => 'application/octet-stream', 'Content-Disposition' => 'attachment;filename="' . $ver . '_' . seekTime() . '.tar.gz"'];
+                            $this->data['data'] = $gzFile;
+                        } else {
+                            $this->data['code'] = 308;
+                            $this->data['msg'] = '下载数据错误';
+                            $this->data['data'] = $header;
                         }
                     } else {
-                        $ver = $this->data('ver', 'v3.1') . '_' . $this->data('php', '8.1');
-                        $file = $ver . '_' . trim(Frame::delPath(basename($this->data('zip'))) . '.tar.gz');
-                        $gzFile = rtrim($this->data['save'], '/') . '/' . $file;
-                        Frame::mkDir(dirname($gzFile));
-                        @file_put_contents($gzFile, $curl->body());
-                        $this->data['msg'] = '加密成功(' . $ver . ')';
-                        $this->data['code'] = 200;
-                        $this->data['head'] = ['Content-Type' => 'application/octet-stream', 'Content-Disposition' => 'attachment;filename="' . $ver . '_' . seekTime() . '.tar.gz"'];
-                        $this->data['data'] = $gzFile;
+                        return $this->encrypt(true);
+                    }
+                } else {
+                    $this->data['code'] = 307;
+                    $this->data['msg'] = '提交数据错误';
+                    $this->data['data'] = $data;
+                    $arr = explode('<i class="fa fa-check-square-o"></i>', $curl->body());
+                    if (isset($arr[1])) {
+                        $array = explode('</h4>', $arr[1]);
+                        if (!empty($msg = trim(Frame::getStrArr($array, 0)))) {
+                            $this->data['code'] = 302;
+                            $this->data['msg'] = $msg;
+                        }
                     }
                 }
             }
