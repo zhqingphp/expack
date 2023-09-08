@@ -14,7 +14,7 @@ use zhqing\telegram\AnswerCallbackQuery;
 
 class demo {
     public Bot $bot;
-    public static string $token = 'xxxxxxxxxxxxxxxxxxxx';
+    public static string $token = '5750066939:AAHq7dTFAgb5fi94Bhr99_oQYnLuavrhJpA';
 
     public function __construct() {
         $this->bot = new Bot(self::$token);
@@ -28,11 +28,13 @@ class demo {
         $message_chat_id = $self->message_chat_id();
         //回调游戏
         $callback_id = $self->callback_query_id();
-        $callback_data = $self->callback_query_data();
-        if (!empty($callback_id) && !empty($callback_data)) {
-            switch ($callback_data) {
+        $callback_query_game_short_name = $self->callback_query_game_short_name();
+        if (!empty($callback_id) && !empty($callback_query_game_short_name)) {
+            switch ($callback_query_game_short_name) {
                 case "pggame":
-                    $data = AnswerCallbackQuery::callback_query_id($callback_id)->url('https://baidu.com')->get();
+                    $data = AnswerCallbackQuery::callback_query_id($callback_id)
+                        ->url('https://baidu.com')
+                        ->get();
                     $this->bot->answerCallbackQuery($data);
                     break;
             }
