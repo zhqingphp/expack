@@ -9,12 +9,6 @@ use support\Db;
 use Closure;
 
 class Model extends \support\Model {
-    /**
-     * @param Closure $callback
-     * @param int $attempts
-     * @return mixed
-     * @throws \Throwable
-     */
     public static function transaction(Closure $callback, $attempts = 1) {
         $self = new static();
         return DB::connection($self->connection)->transaction($callback, $attempts);
@@ -34,6 +28,19 @@ class Model extends \support\Model {
     public static function rollback() {
         $self = new static();
         DB::connection($self->connection)->rollback();
+    }
+
+    public static function affair(Closure $commit, Closure|null $rollback = null) {
+        $self = new static();
+        DB::connection($self->connection)->beginTransaction();
+        try {
+            $data = is_callable($commit) ? $commit() : true;
+            DB::connection($self->connection)->commit();
+            return $data;
+        } catch (\Illuminate\Database\QueryException $ex) {
+            DB::connection($self->connection)->rollback();
+            return is_callable($rollback) ? $rollback() : false;
+        }
     }
 
     /**
