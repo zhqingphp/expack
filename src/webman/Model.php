@@ -6,8 +6,36 @@ use Illuminate\Database\Eloquent\Builder;
 use zhqing\extend\Frame;
 use support\Response;
 use support\Db;
+use Closure;
 
 class Model extends \support\Model {
+    /**
+     * @param Closure $callback
+     * @param int $attempts
+     * @return mixed
+     * @throws \Throwable
+     */
+    public static function transaction(Closure $callback, $attempts = 1) {
+        $self = new static();
+        return DB::connection($self->connection)->transaction($callback, $attempts);
+    }
+
+    public static function beginTransaction() {
+        $self = new static();
+        DB::connection($self->connection)->beginTransaction();
+    }
+
+    public static function commit() {
+        $self = new static();
+        DB::connection($self->connection)->commit();
+
+    }
+
+    public static function rollback() {
+        $self = new static();
+        DB::connection($self->connection)->rollback();
+    }
+
     /**
      * 获取表单信息
      * @param string|null $default //数据库配置
