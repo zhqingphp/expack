@@ -96,7 +96,7 @@ class ReplyMarkup extends Common {
                 }
             }
             $arr['one_time_keyboard'] = false;
-            $arr['resize_keyboard'] = false;
+            $arr['resize_keyboard'] = true;
             $arr['is_persistent'] = true;
         }
         return Frame::json(array_merge((!empty($arr) ? $arr : []), $array));
