@@ -3,12 +3,21 @@
 namespace zhqing\webman;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Connection;
 use zhqing\extend\Frame;
 use support\Response;
 use support\Db;
 use Closure;
 
 class Model extends \support\Model {
+    /**
+     * @return Connection
+     */
+    public static function link() {
+        $self = new static();
+        return DB::connection($self->connection);
+    }
+
     public static function transaction(Closure $callback, $attempts = 1) {
         $self = new static();
         return DB::connection($self->connection)->transaction($callback, $attempts);
@@ -22,7 +31,6 @@ class Model extends \support\Model {
     public static function commit() {
         $self = new static();
         DB::connection($self->connection)->commit();
-
     }
 
     public static function rollback() {
