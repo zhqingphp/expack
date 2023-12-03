@@ -72,7 +72,7 @@ if (!function_exists('seekTime')) {
 }
 
 /**
- * 13位时间转12位
+ * 13位时间转10位
  * @param $time
  * @return float|int
  */
@@ -82,6 +82,14 @@ if (!function_exists('strToDate')) {
     }
 }
 
+/**
+ * 13位转时间
+ */
+if (!function_exists('timeToDate')) {
+    function timeToDate($time): float|int {
+        return seekDate(strToDate($time));
+    }
+}
 /**
  * @param $data
  * @return string
@@ -103,6 +111,45 @@ if (!function_exists('seekDate')) {
     }
 }
 
+/**
+ * 当天时间
+ * @param int|string $time
+ * @return array
+ */
+if (!function_exists('dayTime')) {
+    function dayTime(int|string $time = 0): array {
+        $data['top'] = date('Y-m-d 00:00:00', $time);
+        $data['end'] = date('Y-m-d 23:59:59', $time);
+        return $data;
+    }
+}
+/**
+ * 本周时间
+ * @param int|string $time
+ * @return array
+ */
+if (!function_exists('weekTime')) {
+    function weekTime(int|string $time = 0): array {
+        $time = is_string($time) ? strtotime($time) : ($time > 0 ? $time : time());
+        $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, date('m', $time), date('d', $time) - date('w', $time) + 1, date('Y', $time)));
+        $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, date('m', $time), date('d', $time) - date('w', $time) + 7, date('Y', $time)));
+        return $data;
+    }
+}
+
+/**
+ * 本月时间
+ * @param int|string $time
+ * @return array
+ */
+if (!function_exists('monthTime')) {
+    function monthTime(int|string $time = 0): array {
+        $time = is_string($time) ? strtotime($time) : ($time > 0 ? $time : time());
+        $data['top'] = date('Y-m-01 00:00:00', $time);
+        $data['end'] = date('Y-m-t 23:59:59', $time);
+        return $data;
+    }
+}
 /**
  * 设置cli颜色
  * @param $data
@@ -190,5 +237,19 @@ if (!function_exists('resCome')) {
 if (!function_exists('resErr')) {
     function resErr($msg, $code = 400, $data = []): array {
         return ['code' => $code, 'data' => $data, 'msg' => $msg];
+    }
+}
+
+if (!function_exists('getOrderId')) {
+    function getOrderId(string $prefix = ''): string {
+        list($m, $s) = explode(' ', microtime());
+        return strtoupper($prefix . \chr(\rand(65, 90)) . \bin2hex(\chr(\rand(65, 90)) . \pack('N', substr(((float)sprintf('%.0f', (floatval($m) + floatval($s)) * 1000)), 0, 13))));
+    }
+}
+
+if (!function_exists('getProtocol')) {
+    function getProtocol($domain = ''): string {
+        $domain = !empty($domain) ? $domain : request()->header('referer', getenv('APP_HTTP') . '://');
+        return join(array_slice(explode('://', $domain), 0, 1));
     }
 }
