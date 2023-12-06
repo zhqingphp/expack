@@ -118,6 +118,7 @@ if (!function_exists('seekDate')) {
  */
 if (!function_exists('dayTime')) {
     function dayTime(int|string $time = 0): array {
+        $time = is_string($time) ? strtotime($time) : ($time > 0 ? $time : time());
         $data['top'] = date('Y-m-d 00:00:00', $time);
         $data['end'] = date('Y-m-d 23:59:59', $time);
         return $data;

@@ -38,16 +38,26 @@ class Model extends \support\Model {
         DB::connection($self->connection)->rollback();
     }
 
-    public static function affair(Closure $commit, Closure|null $rollback = null) {
-        $self = new static();
-        DB::connection($self->connection)->beginTransaction();
-        try {
-            $data = is_callable($commit) ? $commit() : true;
-            DB::connection($self->connection)->commit();
-            return $data;
-        } catch (\Illuminate\Database\QueryException $ex) {
-            DB::connection($self->connection)->rollback();
-            return is_callable($rollback) ? $rollback() : false;
+    public static function affair(Closure $commit, Closure|null $rollback = null, $attempts = 1) {
+        if ($attempts > 0) {
+            try {
+                return self::transaction(function () use ($commit) {
+                    return is_callable($commit) ? $commit() : false;
+                }, $attempts);
+            } catch (\Exception | \Error $e) {
+                return is_callable($rollback) ? $rollback() : false;
+            }
+        } else {
+            $self = new static();
+            DB::connection($self->connection)->beginTransaction();
+            try {
+                $data = is_callable($commit) ? $commit() : true;
+                DB::connection($self->connection)->commit();
+                return $data;
+            } catch (\Illuminate\Database\QueryException $ex) {
+                DB::connection($self->connection)->rollback();
+                return is_callable($rollback) ? $rollback() : false;
+            }
         }
     }
 
