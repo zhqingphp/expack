@@ -254,3 +254,122 @@ if (!function_exists('getProtocol')) {
         return join(array_slice(explode('://', $domain), 0, 1));
     }
 }
+
+
+if (!function_exists('getNowTime')) {
+    function getNowTime($type, $time = 0): array {
+        $time = is_string($time) ? strtotime($time) : ($time > 0 ? $time : time());
+        switch ($type) {
+            case 1:
+                //今天
+                $data['top'] = date('Y-m-d 00:00:00', $time);
+                $data['end'] = date('Y-m-d 23:59:59', $time);
+                return $data;
+            case 2:
+                //昨天
+                $time = strtotime('-1 day', $time);
+                $data['top'] = date('Y-m-d 00:00:00', $time);
+                $data['end'] = date('Y-m-d 23:59:59', $time);
+                return $data;
+            case 3:
+                //本周
+                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, date('m', $time), date('d', $time) - date('w', $time) + 1, date('Y', $time)));
+                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, date('m', $time), date('d', $time) - date('w', $time) + 7, date('Y', $time)));
+                return $data;
+            case 4:
+                //上周
+                $time = strtotime('-1 week', $time);
+                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, date('m', $time), date('d', $time) - date('w', $time) + 1, date('Y', $time)));
+                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, date('m', $time), date('d', $time) - date('w', $time) + 7, date('Y', $time)));
+                return $data;
+            case 5:
+                //近一周
+                $data['top'] = date('Y-m-d H:i:s', strtotime('-7 day', $time));
+                $data['end'] = date('Y-m-d H:i:s', $time);
+                return $data;
+            case 6:
+                //本月
+                $data['top'] = date('Y-m-01 00:00:00', $time);
+                $data['end'] = date('Y-m-t 23:59:59', $time);
+                return $data;
+            case 7:
+                //上月
+                $time = strtotime('-1 month', $time);
+                $data['top'] = date('Y-m-01 00:00:00', $time);
+                $data['end'] = date('Y-m-t 23:59:59', $time);
+                return $data;
+            case 8:
+                //近一月
+                $data['top'] = date('Y-m-d H:i:s', strtotime('-1 month', $time));
+                $data['end'] = date('Y-m-d H:i:s', $time);
+                return $data;
+            case 9:
+                //近三月
+                $data['top'] = date('Y-m-d H:i:s', strtotime('-3 month', $time));
+                $data['end'] = date('Y-m-d H:i:s', $time);
+                return $data;
+            case 10:
+                //本季度
+                $quarter = ceil((date('n', $time)) / 3);//当月是第几季度
+                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter * 3 - 3 + 1, 1, date('Y', $time)));
+                $data['end'] = date('Y-m-d H:i:s', $time);
+                return $data;
+            case 11:
+                //上季度
+                $y = date('Y', $time);
+                $quarter = (ceil((date('n', $time)) / 3) - 1) * 3;//上季度是第几季度
+                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
+                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
+                return $data;
+            case 12:
+                //第1季度
+                $y = date('Y', $time);
+                $quarter = 1 * 3;//上季度是第几季度
+                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
+                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
+                return $data;
+            case 13:
+                //第2季度
+                $y = date('Y', $time);
+                $quarter = 2 * 3;//上季度是第几季度
+                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
+                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
+                return $data;
+            case 14:
+                //第3季度
+                $y = date('Y', $time);
+                $quarter = 3 * 3;//上季度是第几季度
+                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
+                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
+                return $data;
+            case 15:
+                //第4季度
+                $y = date('Y', $time);
+                $quarter = 4 * 3;//上季度是第几季度
+                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
+                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
+                return $data;
+            case 16:
+                //当年
+                $data['top'] = date('Y-01-01 00:00:00', $time);
+                $data['end'] = date('Y-m-d H:i:s', $time);
+                return $data;
+            case 17:
+                //去年
+                $data['top'] = date('Y-01-01 00:00:00', strtotime('-1 year', $time));
+                $data['end'] = date('Y-12-31 23:59:59', strtotime('-1 year', $time));
+                return $data;
+            case 18:
+                //近一年
+                $data['top'] = date('Y-m-d H:i:s', strtotime('-1 year', $time));
+                $data['end'] = date('Y-m-d H:i:s', $time);
+                return $data;
+            default:
+                //时间
+                list($t1, $t2) = explode(" ", (!empty($time) ? $time : microtime()));
+                $data['top'] = (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
+                $data['end'] = date(((!empty($type) && is_string($type)) ? $type : 'Y-m-d H:i:s'), $time);
+                return $data;
+        }
+    }
+}
