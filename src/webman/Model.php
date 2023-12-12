@@ -15,27 +15,27 @@ class Model extends \support\Model {
      */
     public static function link() {
         $self = new static();
-        return DB::connection($self->connection);
+        return Db::connection($self->connection);
     }
 
     public static function transaction(Closure $callback, $attempts = 1) {
         $self = new static();
-        return DB::connection($self->connection)->transaction($callback, $attempts);
+        return Db::connection($self->connection)->transaction($callback, $attempts);
     }
 
     public static function beginTransaction() {
         $self = new static();
-        DB::connection($self->connection)->beginTransaction();
+        Db::connection($self->connection)->beginTransaction();
     }
 
     public static function commit() {
         $self = new static();
-        DB::connection($self->connection)->commit();
+        Db::connection($self->connection)->commit();
     }
 
     public static function rollback() {
         $self = new static();
-        DB::connection($self->connection)->rollback();
+        Db::connection($self->connection)->rollback();
     }
 
     public static function affair(Closure $commit, Closure|null $rollback = null, $attempts = 1) {
@@ -49,13 +49,13 @@ class Model extends \support\Model {
             }
         } else {
             $self = new static();
-            DB::connection($self->connection)->beginTransaction();
+            Db::connection($self->connection)->beginTransaction();
             try {
                 $data = is_callable($commit) ? $commit() : true;
-                DB::connection($self->connection)->commit();
+                Db::connection($self->connection)->commit();
                 return $data;
             } catch (\Illuminate\Database\QueryException $ex) {
-                DB::connection($self->connection)->rollback();
+                Db::connection($self->connection)->rollback();
                 return is_callable($rollback) ? $rollback() : false;
             }
         }
