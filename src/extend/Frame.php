@@ -22,24 +22,17 @@ class Frame {
     /**
      * 修改url中的get参数
      * @param string $url
-     * @param array $arr
+     * @param array $arr //要设置的get
      * @return string
      */
     public static function editUrlGet(string $url, array $arr): string {
         $data = self::getUrlArr($url);
-        if (!empty($get = $data['get']) && !empty($arr)) {
-            foreach ($get as $k => $v) {
-                $get[$k] = $arr[$k] ?? $v;
-            }
-            $url = rtrim($data['url'], '/');
-            if (!empty($port = $data['port'])) {
-                $url .= ':' . $port;
-            }
-            $url .= '/' . ltrim($data['path'], '/');
-            $url .= '?' . http_build_query($get);
-            if (!empty($fragment = $data['fragment'])) {
-                $url .= '#' . $fragment;
-            }
+        if (!empty($get = ($data['get'] ?? [])) && !empty($arr)) {
+            $url = rtrim(($data['url'] ?? ''), '/')
+                . (!empty($port = ($data['port'] ?? '')) ? ':' . $port : '')
+                . ($data['path'] ?? '')
+                . '?' . http_build_query(array_merge($get, $arr))
+                . (!empty($fragment = ($data['fragment'] ?? '')) ? '#' . $fragment : '');
         }
         return $url;
     }

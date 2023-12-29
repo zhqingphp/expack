@@ -1,22 +1,22 @@
 {
-  "name": "zhqingphp/expack",
-  "description": "zhqing php扩展包",
-  "license": "Apache-2.0",
-  "require": {
-    "php": ">=8.0"
+  "name":"zhqingphp/expack",
+  "description":"zhqing php扩展包",
+  "license":"Apache-2.0",
+  "require":{
+    "php":">=8.0"
   },
-  "autoload": {
-    "psr-4": {
-      "zhqing\\": "src/"
+  "autoload":{
+    "psr-4":{
+      "zhqing\\":"src/"
     },
-    "files": [
+    "files":[
       "src/function.php"
     ]
   },
-  "authors": [
+  "authors":[
     {
-      "name": "zhqing",
-      "email": "9740878@qq.com"
+      "name":"zhqing",
+      "email":"9740878@qq.com"
     }
   ]
 }
