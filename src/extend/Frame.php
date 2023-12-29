@@ -14,9 +14,35 @@ use zhqing\extend\frame\Acme;
 use zhqing\extend\frame\Wait;
 use zhqing\extend\frame\Xml;
 use zhqing\extend\frame\Tool;
+use zhqing\extend\frame\Date;
 
 class Frame {
-    use Acme, File, Upload, Browser, Arrays, Decompression, Mime, Wait, Sort, Xml, Tool, NewWay;
+    use Acme, File, Upload, Browser, Arrays, Decompression, Mime, Wait, Sort, Xml, Tool, NewWay, Date;
+
+    /**
+     * 修改url中的get参数
+     * @param string $url
+     * @param array $arr
+     * @return string
+     */
+    public static function editUrlGet(string $url, array $arr): string {
+        $data = self::getUrlArr($url);
+        if (!empty($get = $data['get']) && !empty($arr)) {
+            foreach ($get as $k => $v) {
+                $get[$k] = $arr[$k] ?? $v;
+            }
+            $url = rtrim($data['url'], '/');
+            if (!empty($port = $data['port'])) {
+                $url .= ':' . $port;
+            }
+            $url .= '/' . ltrim($data['path'], '/');
+            $url .= '?' . http_build_query($get);
+            if (!empty($fragment = $data['fragment'])) {
+                $url .= '#' . $fragment;
+            }
+        }
+        return $url;
+    }
 
     /**
      * 获取url详细
@@ -32,18 +58,9 @@ class Frame {
         }
         $array['url'] = ($parse['scheme'] ?? 'https') . '://' . ($parse['host'] ?? '') . '/';
         $array['path'] = ($parse['path'] ?? '');
+        $array['port'] = ($parse['port'] ?? '');
         $array['fragment'] = ($parse['fragment'] ?? '');
         return $array;
-    }
-
-    /**
-     * 获取本周星期(1-7)的日期
-     * @param int $s 要获取的星期(1-7)
-     * @param int $data //当前时间
-     * @return int
-     */
-    public static function getWDate(int $s = 1, int $data = 0): int {
-        return ($data > 0 ? $data : time()) - (60 * 60 * 24 * ((date('w', ($data > 0 ? $data : time())) ?: 7) - $s));
     }
 
     /**
@@ -87,7 +104,7 @@ class Frame {
      * @return mixed
      */
     public static function getArr(array $data, null|string|int $key = null, mixed $default = ''): mixed {
-        return empty(isset($key)) ? $data : (isset($data[$key]) ? ($data[$key] ?: $default) : $default);
+        return isset($key) ? $data : (isset($data[$key]) ? (!empty($data[$key]) ? $data[$key] : $default) : $default);
     }
 
     /**
@@ -121,6 +138,23 @@ class Frame {
     public static function strRep(string $str, string $old, string $new = ''): string {
         return \str_replace($old, $new, $str);
     }
+
+    /**
+     * 替换内容
+     * @param string $body //内容
+     * @param array $preg //要替换的内容['旧内容'=>'新内容']
+     * @param array $pattern
+     * @param array $replacement
+     * @return string
+     */
+    public static function repBody(string $body, array $preg, array $pattern = [], array $replacement = []): string {
+        foreach ($preg as $k => $v) {
+            $pattern[] = "/" . quotemeta($k) . "/";
+            $replacement[] = $v;
+        }
+        return preg_replace($pattern, $replacement, $body);
+    }
+
 
     /**
      * 获取格式

@@ -1,5 +1,7 @@
 <?php
 
+use zhqing\extend\Frame;
+
 if (!function_exists('ps')) {
     function ps($data, $type = true) {
         $content = '<pre>' . print_r($data, true) . '</pre>';
@@ -183,13 +185,7 @@ if (!function_exists('isCli')) {
 
 if (!function_exists('setArr')) {
     function setArr($key, $data): mixed {
-        $arr = \array_merge(\explode('.', $key), [$data]);
-        while (\count($arr) > 1) {
-            $v = \array_pop($arr);
-            $k = \array_pop($arr);
-            $arr[] = [$k => $v];
-        }
-        return $arr[\key($arr)];
+        return Frame::setStrArr($key, $data);
     }
 }
 /**
@@ -201,21 +197,9 @@ if (!function_exists('setArr')) {
  */
 if (!function_exists('getArr')) {
     function getArr(array $data, string|int|null $key = null, $default = null): mixed {
-        if (isset($key)) {
-            $arr = \explode('.', $key);
-            foreach ($arr as $v) {
-                if (isset($data[$v])) {
-                    $data = ($data[$v] ?: $default);
-                } else {
-                    $data = $default;
-                    break;
-                }
-            }
-        }
-        return $data;
+        return Frame::getStrArr($data, $key, $default);
     }
 }
-
 //开启跨域
 if (!function_exists('resCross')) {
     function resCross(array $header = [], $type = ''): array {
@@ -264,128 +248,32 @@ if (!function_exists('getNowTime')) {
      * @return array
      */
     function getNowTime($type, string|array|int $format = '', int|string $time = 0): array {
-        $time = (!empty($format) && is_numeric($format)) ? $format : (is_string($time) ? strtotime($time) : ($time > 0 ? $time : time()));
-        switch ($type) {
-            case 1:
-                //今天
-                $data['top'] = date('Y-m-d 00:00:00', $time);
-                $data['end'] = date('Y-m-d 23:59:59', $time);
-                break;
-            case 2:
-                //昨天
-                $time = strtotime('-1 day', $time);
-                $data['top'] = date('Y-m-d 00:00:00', $time);
-                $data['end'] = date('Y-m-d 23:59:59', $time);
-                break;
-            case 3:
-                //本周
-                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, date('m', $time), date('d', $time) - date('w', $time) + 1, date('Y', $time)));
-                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, date('m', $time), date('d', $time) - date('w', $time) + 7, date('Y', $time)));
-                break;
-            case 4:
-                //上周
-                $time = strtotime('-1 week', $time);
-                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, date('m', $time), date('d', $time) - date('w', $time) + 1, date('Y', $time)));
-                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, date('m', $time), date('d', $time) - date('w', $time) + 7, date('Y', $time)));
-                break;
-            case 5:
-                //近一周
-                $data['top'] = date('Y-m-d H:i:s', strtotime('-7 day', $time));
-                $data['end'] = date('Y-m-d H:i:s', $time);
-                break;
-            case 6:
-                //本月
-                $data['top'] = date('Y-m-01 00:00:00', $time);
-                $data['end'] = date('Y-m-t 23:59:59', $time);
-                break;
-            case 7:
-                //上月
-                $time = strtotime('-1 month', $time);
-                $data['top'] = date('Y-m-01 00:00:00', $time);
-                $data['end'] = date('Y-m-t 23:59:59', $time);
-                break;
-            case 8:
-                //近一月
-                $data['top'] = date('Y-m-d H:i:s', strtotime('-1 month', $time));
-                $data['end'] = date('Y-m-d H:i:s', $time);
-                break;
-            case 9:
-                //近三月
-                $data['top'] = date('Y-m-d H:i:s', strtotime('-3 month', $time));
-                $data['end'] = date('Y-m-d H:i:s', $time);
-                break;
-            case 10:
-                //本季度
-                $quarter = ceil((date('n', $time)) / 3);//当月是第几季度
-                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter * 3 - 3 + 1, 1, date('Y', $time)));
-                $data['end'] = date('Y-m-d H:i:s', $time);
-                break;
-            case 11:
-                //上季度
-                $y = date('Y', $time);
-                $quarter = (ceil((date('n', $time)) / 3) - 1) * 3;//上季度是第几季度
-                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
-                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
-                break;
-            case 12:
-                //第1季度
-                $y = date('Y', $time);
-                $quarter = 1 * 3;//上季度是第几季度
-                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
-                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
-                break;
-            case 13:
-                //第2季度
-                $y = date('Y', $time);
-                $quarter = 2 * 3;//上季度是第几季度
-                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
-                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
-                break;
-            case 14:
-                //第3季度
-                $y = date('Y', $time);
-                $quarter = 3 * 3;//上季度是第几季度
-                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
-                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
-                break;
-            case 15:
-                //第4季度
-                $y = date('Y', $time);
-                $quarter = 4 * 3;//上季度是第几季度
-                $data['top'] = date('Y-m-d H:i:s', mktime(0, 0, 0, $quarter - 3 + 1, 1, $y));
-                $data['end'] = date('Y-m-d H:i:s', mktime(23, 59, 59, $quarter, date('t', mktime(0, 0, 0, $quarter, 1, $y)), $y));
-                break;
-            case 16:
-                //当年
-                $data['top'] = date('Y-01-01 00:00:00', $time);
-                $data['end'] = date('Y-m-d H:i:s', $time);
-                break;
-            case 17:
-                //去年
-                $data['top'] = date('Y-01-01 00:00:00', strtotime('-1 year', $time));
-                $data['end'] = date('Y-12-31 23:59:59', strtotime('-1 year', $time));
-                break;
-            case 18:
-                //近一年
-                $data['top'] = date('Y-m-d H:i:s', strtotime('-1 year', $time));
-                $data['end'] = date('Y-m-d H:i:s', $time);
-                break;
-            default:
-                //时间
-                list($t1, $t2) = explode(" ", (!empty($time) ? $time : microtime()));
-                $data['top'] = (float)sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
-                $data['end'] = date(((!empty($type) && is_string($type)) ? $type : 'Y-m-d H:i:s'), $time);
-                break;
-        }
-        if (!empty($format)) {
-            if (is_array($format)) {
-                $data['top'] = date($format[0], strtotime($data['top']));
-                $data['end'] = date($format[1], strtotime($data['end']));
-            } else if (is_string($format)) {
-                $data['top'] = date($format, strtotime($data['top']));
-                $data['end'] = date($format, strtotime($data['end']));
-            }
-        }
-        return $data;
+        return Frame::getDateTime($type, $format, $time);
+    }
+}
+
+
+if (!function_exists('getArrDate')) {
+    /**
+     * 通过$reset获取$array
+     * @param array $reset ['aa']=获取aa  ['aa as bb']=aa设置别名bb  ['aa as bb'=>'11']=aa设置别名bb(空值时设置11),['bb'=>'22']=bb设置值22
+     * @param array $array 数据
+     * @param array $arr 返回预设置值
+     * @return array
+     */
+    function getArrDate(array $reset, array $array, array $arr = []): array {
+        return Frame::getArrDate($reset, $array, $arr);
+    }
+}
+
+if (!function_exists('repBody')) {
+    /**
+     * 替换内容
+     * @param string $body //内容
+     * @param array $preg //要替换的内容['旧内容'=>'新内容']
+     * @return string
+     */
+    function repBody(string $body, array $preg): string {
+        return Frame::repBody($body, $preg);
     }
 }
