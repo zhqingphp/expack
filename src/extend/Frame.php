@@ -104,7 +104,7 @@ class Frame {
      * @return mixed
      */
     public static function getArr(array $data, null|string|int $key = null, mixed $default = ''): mixed {
-        return isset($key) ? $data : (isset($data[$key]) ? ($data[$key] ?: $default) : $default);
+        return isset($key) ? (isset($data[$key]) ? ($data[$key] ?: $default) : $default) : $data;
     }
 
     /**
