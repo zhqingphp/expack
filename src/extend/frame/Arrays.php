@@ -60,7 +60,6 @@ trait Arrays {
             foreach ($nameArr as $v) {
                 if (isset($data[$v])) {
                     $data = $data[$v] ?: $default;
-                    $data = isset($data[$v]) ? ($data[$v]) : $default;
                 } else {
                     return $default;
                 }
