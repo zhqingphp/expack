@@ -155,7 +155,7 @@ trait Arrays {
      * @param array $arr 返回预设置值
      * @return array
      */
-    public static function getArrDate(array $reset, array $array, array $arr = []): array {
+    public static function getArrData(array $reset, array $array, array $arr = []): array {
         foreach ($reset as $k => $v) {
             if (is_numeric($k)) {
                 $old_key = trim($v);
