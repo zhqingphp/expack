@@ -60,7 +60,7 @@ trait Arrays {
             foreach ($nameArr as $v) {
                 if (isset($data[$v])) {
                     $data = $data[$v] ?: $default;
-                    $data = isset($data[$v]) ? (!empty($data[$v]) ? $data[$v] : $default) : $default;
+                    $data = isset($data[$v]) ? ($data[$v]) : $default;
                 } else {
                     return $default;
                 }
@@ -175,7 +175,7 @@ trait Arrays {
                 if (count($value) == 2) {
                     $old_key = isset($value[0]) ? (!empty($value[0]) ? trim($value[0]) : $k) : $k;
                     $new_key = isset($value[1]) ? (!empty($value[1]) ? trim($value[1]) : $old_key) : $old_key;
-                    $val = isset($array[$old_key]) ? (!empty($array[$old_key]) ? $array[$old_key] : $val) : $val;
+                    $val = $array[$old_key] ?? $val;
                 }
                 $arr[$new_key] = $val;
             }
