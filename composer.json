@@ -1,6 +1,6 @@
 {
   "name":"zhqingphp/expack",
-  "description":"php扩展包",
+  "description":"php扩展包2.100.06",
   "license":"Apache-2.0",
   "require":{
     "php":">=8.0"

@@ -2,10 +2,10 @@
 
 namespace zhqing\extend;
 
-use phpseclib3\Crypt\AES;
-use phpseclib3\Crypt\DES;
 use zhqing\extend\safe\Moving;
 use zhqing\extend\safe\Openssl;
+use phpseclib3\Crypt\AES;
+use phpseclib3\Crypt\DES;
 use phpseclib3\Crypt\TripleDES as DES3;
 
 /**
