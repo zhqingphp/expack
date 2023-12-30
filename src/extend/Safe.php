@@ -159,7 +159,6 @@ class Safe {
         $mode = $this->data('mode') ?: $mode;
         $safe = (new $class(strtoupper($mode)));
         $safe->setKey($key);
-        var_dump([$mode, $iv]);
         if (!empty($iv))
             $safe->setIV($iv);
         if ($length > 0)
