@@ -1,436 +1,288 @@
 <?php
 
 namespace zhqing\extend;
+
+use phpseclib3\Crypt\AES;
+use phpseclib3\Crypt\DES;
+use zhqing\extend\safe\Moving;
+use zhqing\extend\safe\Openssl;
+use phpseclib3\Crypt\TripleDES as DES3;
+
+/**
+ * https://github.com/phpseclib/phpseclib
+ * composer require phpseclib/phpseclib:~3.0
+ */
 class Safe {
-    //调试私钥
-    public static string $private = '-----BEGIN PRIVATE KEY-----
-MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAOVvpzd7f4p3cg3k
-tQNyUnPDmJA9Sl0WOto9zk5W2a/hxvfWbi+Epv3AOzg3u67owS6dCIXh1ConQlnJ
-krkqFDaIvJWZjlzC67VAglO2GF0aQ9eT6nFXxPUPFEOvzhlePTKsv0zhDHzC6p9V
-iEQZukoH7D3XprVjxu8tZMKySviXAgMBAAECgYEAmy7M1CsU1ev6WclSYZVmjWRD
-gXPjI1kQz2I0cyotLNgyApmnhz5a0JC/vUN9D03gtA2EoUFghm5tY1uCgPkkF4Kk
-6EFHr84FxzMUzQgEPTNBEru2n2fAeJP902c+0b9HAuU735RESHqlGzxL5uYRu3pk
-1UcKRj2E4CbdA2xgCdkCQQD5SbgEqkD/wdLAgYW6L+sZbmfs/9huKmKUjLsoqqUg
-xcr9gjE/0htP6fAicHkuZnFqXvNohTrg+AxU4ZVZb46LAkEA650Zwj0dxJ8TOI6w
-yocnbiP5V1wws5giE+x+gGowg1e7hE0MeYYf6vIYxN8MsaEHg/6dZX6Udd14dg+C
-MHBrpQJBAI/4FC+ViA5tCOMmqm2Z6QP58Ek+hOcy0VYLZLeavd0MfiwkeX7rP9zK
-NWYeYM38WfndtmOhthxhBPYshc1uEPsCQHXJfQYgvY/9IoPEudcVx/2E2HL28JXn
-+SlSsk8KRyRyKJlUV2ctSSmQTBenllX6taIkGJWTuS5PQJhs2l3S5c0CQQCkZoHB
-WiZY6WA2LbnzD7vKbxg6/cq/Q/bg94k5e44lyJMZ8DGoKuzBYOCtyBbaEiL9/2OT
-3JeKtTg4ha0rAcFO
------END PRIVATE KEY-----';
-    //调试公钥
-    public static string $public = '-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDlb6c3e3+Kd3IN5LUDclJzw5iQ
-PUpdFjraPc5OVtmv4cb31m4vhKb9wDs4N7uu6MEunQiF4dQqJ0JZyZK5KhQ2iLyV
-mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
-16a1Y8bvLWTCskr4lwIDAQAB
------END PUBLIC KEY-----';
+    use Moving;
+    use Openssl;
+
+    public array $data = [];
+
+    public array $list = [
+        'AES' => [
+            'class' => AES::class,
+            'length' => [128, 192, 256],
+            'key' => [16, 24, 32],
+            'iv' => [16]
+        ],
+        'DES' => [
+            'class' => DES::class,
+            'length' => false,
+            'key' => [8],
+            'iv' => [8]
+        ],
+        'DES3' => [
+            'class' => DES3::class,
+            'length' => [192],
+            'key' => [16, 24],
+            'iv' => [8]
+        ],
+    ];
 
     /**
-     * 动态加密
-     * @param $data
-     * @return array
+     * @param string $type //加密类型aes,des,des3
+     * @param int $length
+     * @return static
      */
-    public static function movEn($data): array {
-        $type = rand(1, 3);
-        if ($type == 1) {
-            return self::aesEn($data);
-        } else if ($type == 2) {
-            return self::desEn($data);
-        }
-        return self::des3En($data);
-    }
-
-    /**
-     * @param $data
-     * @param $random
-     * @return string
-     */
-    public static function movDe($data, $random = null): string {
-        if (empty($random)) {
-            $random = $data['random'] ?? $random;
-            $data = $data['data'] ?? $data;
-        }
-        $type = substr($random, 0, 1);
-        if ($type == 1) {
-            return self::aesDe($data, $random);
-        } else if ($type == 2) {
-            return self::desDe($data, $random);
-        }
-        return self::des3De($data, $random);
-    }
-
-    /**
-     * aes动态加密
-     * @param $data
-     * @return array
-     */
-    public static function aesEn($data): array {
-        $rand = self::rand();
-        $iv = rand(1, 16);
-        $md5 = md5($rand);
-        $type = rand(1, 2);
-        return [
-            'random' => '1' . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
-            'data' => self::aesEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 16), ($type == 2 ? substr(md5($md5), $iv, 16) : ''))
-        ];
-    }
-
-
-    /**
-     * des动态加密
-     * @param $data
-     * @return array
-     */
-    public static function desEn($data): array {
-        $rand = self::rand();
-        $iv = rand(1, 8);
-        $md5 = md5($rand);
-        $type = rand(1, 2);
-        return [
-            'random' => '2' . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
-            'data' => self::desEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''))
-        ];
-    }
-
-    /**
-     * des3动态加密
-     * @param $data
-     * @return array
-     */
-    public static function des3En($data): array {
-        $rand = self::rand();
-        $iv = rand(1, 8);
-        $md5 = md5($rand);
-        $type = rand(1, 2);
-        return [
-            'random' => '3' . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
-            'data' => self::des3Encrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''))
-        ];
-    }
-
-
-    /**
-     * aes动态解密
-     * @param $data
-     * @param $random
-     * @return string
-     */
-    public static function aesDe($data, $random = null): string {
-        if (empty($random)) {
-            $random = $data['random'] ?? $random;
-            $data = $data['data'] ?? $data;
-        }
-        $md5 = md5(substr($random, 2, strlen($random) - 4));
-        $iv = substr($random, -2);
-        $type = substr($random, 1, 1);
-        return self::aesDecrypt($data, substr($md5, $iv, 16), ($type == 2 ? substr(md5($md5), $iv, 16) : ''));
-    }
-
-    /**
-     * des动态解密
-     * @param $data
-     * @param $random
-     * @return string
-     */
-    public static function desDe($data, $random = null): string {
-        if (empty($random)) {
-            $random = $data['random'] ?? $random;
-            $data = $data['data'] ?? $data;
-        }
-        $md5 = md5(substr($random, 2, strlen($random) - 4));
-        $iv = substr($random, -2);
-        $type = substr($random, 1, 1);
-        return self::desDecrypt($data, substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''));
-    }
-
-
-    /**
-     * des3动态解密
-     * @param $data
-     * @param $random
-     * @return string
-     */
-    public static function des3De($data, $random = null): string {
-        if (empty($random)) {
-            $random = $data['random'] ?? $random;
-            $data = $data['data'] ?? $data;
-        }
-        $md5 = md5(substr($random, 2, strlen($random) - 4));
-        $iv = substr($random, -2);
-        $type = substr($random, 1, 1);
-        return self::des3Decrypt($data, substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''));
+    public static function set(string $type, int $length = 0): static {
+        return (new self($type, $length));
     }
 
     /**
      * aes加密
-     * @param string $data
-     * @param string $key //最长16位
-     * @param string $iv //长度16位
-     * @return string
+     * @param int $length
+     * @return static
      */
-    public static function aesEncrypt(string $data, string $key, string $iv = ''): string {
-        return (!empty($iv) && \strlen($iv) < 16) ? "iv length 16 bits" : (\base64_encode(\openssl_encrypt($data
-            , (!empty($iv) ? "AES-128-CBC" : "AES-128-ECB")
-            , (\strlen($key) > 16 ? \substr($key, 0, 16) : $key)
-            , OPENSSL_RAW_DATA
-            , (!empty($iv) ? \substr($iv, 0, 16) : '')
-        )));
-    }
-
-    /**
-     * aes解密
-     * @param string $data
-     * @param string $key //最长16位
-     * @param string $iv //长度16位
-     * @return string
-     */
-    public static function aesDecrypt(string $data, string $key, string $iv = ''): string {
-        return (!empty($iv) && \strlen($iv) < 16) ? "iv length 16 bits" : (\openssl_decrypt(\base64_decode($data)
-            , (!empty($iv) ? "AES-128-CBC" : "AES-128-ECB")
-            , (\strlen($key) > 16 ? \substr($key, 0, 16) : $key)
-            , OPENSSL_RAW_DATA
-            , (!empty($iv) ? \substr($iv, 0, 16) : '')
-        ));
-    }
-
-    /**
-     * des3加密
-     * @param string $data
-     * @param string $key //最长24位
-     * @param string $iv //长度8位
-     * @return string
-     */
-    public static function des3Encrypt(string $data, string $key, string $iv = ''): string {
-        return (!empty($iv) && \strlen($iv) < 8) ? "iv length 8 bits" : (\base64_encode(\openssl_encrypt($data
-            , (!empty($iv) ? "DES-EDE3-CBC" : "DES-EDE3")
-            , (\strlen($key) > 24 ? \substr($key, 0, 24) : $key)
-            , OPENSSL_RAW_DATA
-            , (!empty($iv) ? \substr($iv, 0, 8) : '')
-        )));
-    }
-
-    /**
-     * des3解密
-     * @param string $data
-     * @param string $key //最长24位
-     * @param string $iv //长度8位
-     * @return string
-     */
-    public static function des3Decrypt(string $data, string $key, string $iv = ''): string {
-        return (!empty($iv) && \strlen($iv) < 8) ? "iv length 8 bits" : (\openssl_decrypt(\base64_decode($data)
-            , (!empty($iv) ? "DES-EDE3-CBC" : "DES-EDE3")
-            , (\strlen($key) > 24 ? \substr($key, 0, 24) : $key)
-            , OPENSSL_RAW_DATA
-            , (!empty($iv) ? \substr($iv, 0, 8) : '')
-        ));
+    public static function aes(int $length = 128): static {
+        return self::set('aes', $length);
     }
 
     /**
      * des加密
+     * @return static
+     */
+    public static function des(): static {
+        return self::set('des');
+    }
+
+    /**
+     * des3加密
+     * @param int $length
+     * @return static
+     */
+    public static function des3(int $length = 192): static {
+        return self::set('des3', $length);
+    }
+
+    /**
+     * 设置加密模式
+     * @param string $mode
+     * @return $this
+     */
+    public function mode(string $mode): static {
+        $this->data['mode'] = strtoupper($mode);
+        return $this;
+    }
+
+    /**
+     * 设置key和iv
+     * @param string $key
+     * @param string $iv
+     * @return $this
+     */
+    public function setKeyIv(string $key, string $iv = ''): static {
+        $this->data['key'] = $key;
+        $this->data['iv'] = $iv;
+        return $this;
+    }
+
+    /**
+     * 加密
+     * @param mixed $data
+     * @param bool $url
+     * @return array|string
+     */
+    public function encrypt(mixed $data, bool $url = false): array|string {
+        if (!empty($safe = $this->verify()) && is_array($safe))
+            return $safe;
+        $content = base64_encode($safe->encrypt($data));
+        return (!empty($url) ? (urlencode($content)) : $content);
+    }
+
+    /**
+     * 解密
+     * @param mixed $data
+     * @param bool $url
+     * @return array|string
+     */
+    public function decrypt(mixed $data, bool $url = false): array|string {
+        if (!empty($safe = $this->verify()) && is_array($safe))
+            return $safe;
+        $content = base64_decode($data);
+        return $safe->decrypt((!empty($url) ? urldecode($content) : $content));
+    }
+
+    /**
+     * 验证
+     * @return mixed
+     */
+    protected function verify(): mixed {
+        $class = $this->list('class');
+        $key = $this->data('key');
+        $key_ = $this->list('key');
+        $iv = $this->data('iv');
+        $iv_ = $this->list('iv');
+        $length = $this->data('length');
+        $length_ = $this->list('length');
+        $mode = '';
+        if (empty($class)) {
+            return $this->error('The encryption type is incorrect', 401);
+        }
+        if (!empty($key_)) {
+            if (empty($key))
+                return $this->error('this algorithm. Only keys of sizes ' . join(',', $key_) . ' supported', 402);
+            if (empty(in_array(strlen($key), $key_)))
+                return $this->error('Key of size ' . strlen($key) . ' not supported by this algorithm. Only keys of sizes ' . join(',', $key_) . ' supported', 403);
+            $mode = 'ECB';
+        }
+        if (!empty($iv) && !empty($iv_)) {
+            if (empty(in_array(strlen($iv), $iv_)))
+                return $this->error('Received initialization vector of size ' . strlen($iv) . ', but size ' . join(',', $iv_) . ' is required', 404);
+            $mode = 'CBC';
+        }
+        if (!empty($length_)) {
+            if (empty($length))
+                return $this->error('this algorithm. Only keys of sizes ' . join(',', $length_) . ' supported', 405);
+            if (empty(in_array($length, $length_)))
+                return $this->error('Key of size ' . $length . ' not supported by this algorithm. Only keys of sizes ' . join(',', $length_) . ' supported', 406);
+        }
+        $mode = $this->data('mode') ?: $mode;
+        $safe = (new $class(strtoupper($mode)));
+        $safe->setKey($key);
+        var_dump([$mode, $iv]);
+        if (!empty($iv))
+            $safe->setIV($iv);
+        if ($length > 0)
+            $safe->setKeyLength($length);
+        return $safe;
+    }
+
+    /**
+     * @param string $type //加密类型aes,des,des3
+     * @param int $length
+     */
+    public function __construct(string $type, int $length = 0) {
+        $this->data['type'] = strtoupper($type);
+        $this->data['length'] = $length;
+    }
+
+    /**
+     * 获取设置数据
+     * @param string $key
+     * @param mixed|string $default
+     * @return mixed
+     */
+    public function data(string $key, mixed $default = ''): mixed {
+        return Frame::getStrArr($this->data, $key, $default);
+    }
+
+    /**
+     * 获取配置
+     * @param string $key
+     * @param mixed|string $default
+     * @return mixed
+     */
+    public function list(string $key, mixed $default = ''): mixed {
+        return Frame::getStrArr($this->list, strtoupper($this->data('type')) . '.' . $key, $default);
+    }
+
+    /**
+     * 报错
+     * @param string $msg
+     * @param int $code
+     * @return array
+     */
+    public function error(string $msg, int $code = 400): array {
+        $data['msg'] = $msg;
+        $data['code'] = $code;
+        return $data;
+    }
+
+    /**
      * @param string $data
-     * @param string $key //最长24位
-     * @param string $iv //长度8位
+     * @param string $key
+     * @param string $iv
+     * @return string
+     */
+    public static function aesEncrypt(string $data, string $key, string $iv = ''): string {
+        $data = self::aes()
+            ->setKeyIv((strlen($key) > 16 ? substr($key, 0, 16) : $key), (strlen($iv) > 16 ? substr($iv, 0, 16) : $iv))
+            ->encrypt($data);
+        return is_array($data) ? $data['msg'] : $data;
+    }
+
+    /**
+     * @param string $data
+     * @param string $key
+     * @param string $iv
+     * @return string
+     */
+    public static function aesDecrypt(string $data, string $key, string $iv = ''): string {
+        $data = self::aes()
+            ->setKeyIv((strlen($key) > 16 ? substr($key, 0, 16) : $key), (strlen($iv) > 16 ? substr($iv, 0, 16) : $iv))
+            ->decrypt($data);
+        return is_array($data) ? $data['msg'] : $data;
+    }
+
+    /**
+     * @param string $data
+     * @param string $key
+     * @param string $iv
      * @return string
      */
     public static function desEncrypt(string $data, string $key, string $iv = ''): string {
-        return (!empty($iv) && \strlen($iv) < 8) ? "iv length 8 bits" : (\base64_encode(\openssl_encrypt($data
-            , (!empty($iv) ? "DES-CBC" : "DES-ECB")
-            , (\strlen($key) > 24 ? \substr($key, 0, 24) : $key)
-            , OPENSSL_RAW_DATA
-            , (!empty($iv) ? \substr($iv, 0, 8) : '')
-        )));
+        $data = self::des()
+            ->setKeyIv((strlen($key) > 8 ? substr($key, 0, 8) : $key), (strlen($iv) > 8 ? substr($iv, 0, 8) : $iv))
+            ->encrypt($data);
+        return is_array($data) ? $data['msg'] : $data;
     }
 
     /**
-     * des解密
      * @param string $data
-     * @param string $key //最长24位
-     * @param string $iv //长度8位
+     * @param string $key
+     * @param string $iv
      * @return string
      */
     public static function desDecrypt(string $data, string $key, string $iv = ''): string {
-        return (!empty($iv) && \strlen($iv) < 8) ? "iv length 8 bits" : (\openssl_decrypt(\base64_decode($data)
-            , (!empty($iv) ? "DES-CBC" : "DES-ECB")
-            , (\strlen($key) > 24 ? \substr($key, 0, 24) : $key)
-            , OPENSSL_RAW_DATA
-            , (!empty($iv) ? \substr($iv, 0, 8) : '')
-        ));
+        $data = self::des()
+            ->setKeyIv((strlen($key) > 8 ? substr($key, 0, 8) : $key), (strlen($iv) > 8 ? substr($iv, 0, 8) : $iv))
+            ->decrypt($data);
+        return is_array($data) ? $data['msg'] : $data;
     }
 
     /**
-     * RSA私钥加密
-     * @param string $data 内容
-     * @param string $key 私钥
-     * @param bool $is 是否格式化私钥、默认不格式化
-     * @param string $cert 公钥类型
-     * @return string
-     */
-    public static function privateEncrypt(string $data, string $key, bool $is = false, string $cert = 'PRIVATE'): string {
-        $key = !empty($is) ? "-----BEGIN {$cert} KEY-----\n" . \chunk_split($key, 64) . "-----END {$cert} KEY-----" : $key;
-        \openssl_private_encrypt($data, $encrypted, \openssl_pkey_get_private($key));
-        return \base64_encode($encrypted);
-    }
-
-    /**
-     * RSA私钥解密
-     * @param string $data 内容
-     * @param string $key 私钥
-     * @param bool $is 是否格式化私钥、默认不格式化
-     * @param string $cert 公钥类型
-     * @return string
-     */
-    public static function privateDecrypt(string $data, string $key, bool $is = false, string $cert = 'PRIVATE'): string {
-        $key = !empty($is) ? "-----BEGIN {$cert} KEY-----\n" . \chunk_split($key, 64) . "-----END {$cert} KEY-----" : $key;
-        \openssl_private_decrypt(\base64_decode($data), $content, \openssl_pkey_get_private($key));
-        return $content;
-    }
-
-    /**
-     * RSA公钥加密
-     * @param string $data 内容
-     * @param string $key 公钥
-     * @param bool $is 是否格式化公钥、默认不格式化
-     * @param string $cert 公钥类型
-     * @return string
-     */
-    public static function publicEncrypt(string $data, string $key, bool $is = false, string $cert = 'PUBLIC'): string {
-        $key = !empty($is) ? "-----BEGIN {$cert} KEY-----\n" . \chunk_split($key, 64) . "-----END {$cert} KEY-----" : $key;
-        \openssl_public_encrypt($data, $encrypted, \openssl_pkey_get_public($key));
-        return \base64_encode($encrypted);
-    }
-
-    /**
-     * RSA公钥解密
-     * @param string $data 内容
-     * @param string $key 公钥
-     * @param bool $is 是否格式化公钥、默认不格式化
-     * @param string $cert 公钥类型
-     * @return string
-     */
-    public static function publicDecrypt(string $data, string $key, bool $is = false, string $cert = 'PUBLIC'): string {
-        $key = !empty($is) ? "-----BEGIN {$cert} KEY-----\n" . \chunk_split($key, 64) . "-----END {$cert} KEY-----" : $key;
-        \openssl_public_decrypt(\base64_decode($data), $content, \openssl_pkey_get_public($key));
-        return $content;
-    }
-
-    /**
-     * 通过pfx密钥文件读取公钥和私钥
-     * @param string $pfxData 证书内容
-     * @param string $pfxPass 证书密码
-     * @return array
-     */
-    public static function getPfxKey(string $pfxData, string $pfxPass): array {
-        \openssl_pkcs12_read($pfxData, $cate, $pfxPass);
-        $data['private'] = $cate['pkey'];
-        $data['public'] = $cate['cert'];
-        return $data;
-    }
-
-    /**
-     * pfx密钥文件私钥加密
-     * @param string $str 加密的数据
-     * @param string $key 私钥
-     * @return string
-     */
-    public static function pfxEncrypt(string $str, string $key): string {
-        openssl_sign($str, $data, $key, OPENSSL_ALGO_SHA1);
-        return base64_encode($data);
-    }
-
-    /**
-     * pfx密钥文件公钥验证加密数据
-     * @param string $str 未加密的数据
-     * @param string $data 加密的数据
-     * @param string $key 公钥
-     * @return int 验证成功返回1
-     */
-    public static function pfxVerify(string $str, string $data, string $key): int {
-        return \openssl_verify($str, \base64_decode($data), $key, OPENSSL_ALGO_SHA1);
-    }
-
-    /**
-     * 通用加密
      * @param string $data
-     * @param string $type //可通过list查看方式
      * @param string $key
      * @param string $iv
      * @return string
      */
-    public static function Encrypt(string $data, string $type, string $key, string $iv = ''): string {
-        return \openssl_encrypt($data, $type, $key, OPENSSL_RAW_DATA, $iv);
+    public static function des3Encrypt(string $data, string $key, string $iv = ''): string {
+        $data = self::des3()
+            ->setKeyIv((strlen($key) > 24 ? substr($key, 0, 24) : $key), (strlen($iv) > 8 ? substr($iv, 0, 8) : $iv))
+            ->encrypt($data);
+        return is_array($data) ? $data['msg'] : $data;
     }
 
     /**
-     * 通用解密
      * @param string $data
-     * @param string $type //可通过list查看方式
      * @param string $key
      * @param string $iv
      * @return string
      */
-    public static function Decrypt(string $data, string $type, string $key, string $iv = ''): string {
-        return \openssl_decrypt($data, $type, $key, OPENSSL_RAW_DATA, $iv);
-    }
-
-    /**
-     * 方法列表
-     * @return array
-     */
-    public static function list(): array {
-        return \openssl_get_cipher_methods();
-    }
-
-    /**
-     * 生成公私密钥
-     * @param int $bits //字节数  512 1024 2048  4096 等
-     * @return array
-     */
-    public static function generateKey(int $bits = 1024): array {
-        $config ['private_key_bits'] = $bits;
-        $config ['config'] = __DIR__ . '/../file/openssl.cnf';
-        $res = \openssl_pkey_new($config);
-        \openssl_pkey_export($res, $private, null, $config);
-        $public = \openssl_pkey_get_details($res);
-        $data['private'] = $private;
-        $data['public'] = $public["key"];
-        return $data;
-    }
-
-    /**
-     * 生成证书
-     * @param int $bits //字节数  512 1024 2048  4096 等
-     * @param string $pass //证书密码
-     * @param int $valid //有效时长 天数
-     * @param array $conf //配置
-     * @return array
-     */
-    public static function generateCertificate(int $bits = 1024, string $pass = '123456', int $valid = 6570, array $conf = []): array {
-        $deploy['countryName'] = $conf ['a'] ?? 'CH'; //所在国家名称
-        $deploy['stateOrProvinceName'] = $conf ['b'] ?? 'State'; //所在省份名称
-        $deploy['localityName'] = $conf ['c'] ?? 'Somewhere'; //所在城市名称
-        $deploy['organizationName'] = $conf ['d'] ?? 'MySelf'; //注册人姓名
-        $deploy['organizationalUnitName'] = $conf ['e'] ?? 'Whatever'; //组织名称
-        $deploy['commonName'] = $conf ['f'] ?? 'mySelf'; //公共名称
-        $deploy['emailAddress'] = $conf ['g'] ?? 'domain@domain.com'; //邮箱
-        $config ['private_key_bits'] = $bits;
-        $config ['config'] = __DIR__ . '/../../file/openssl.cnf';
-        $res = \openssl_pkey_new($config);
-        $csr = \openssl_csr_sign(\openssl_csr_new($deploy, $res, $config), null, $res, $valid, $config);
-        \openssl_x509_export($csr, $cer);
-        \openssl_pkcs12_export($csr, $pfx, $res, $pass);
-        $data ['cer'] = $cer; // 生成证书
-        $data ['pfx'] = $pfx; // 密钥文件
-        return $data;
-    }
-
-    /**
-     * 生成随机
-     * @param int $length
-     * @return string
-     */
-    public static function rand(int $length = 32): string {
-        return substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'), 0, $length);
+    public static function des3Decrypt(string $data, string $key, string $iv = ''): string {
+        $data = self::des3()
+            ->setKeyIv((strlen($key) > 24 ? substr($key, 0, 24) : $key), (strlen($iv) > 8 ? substr($iv, 0, 8) : $iv))
+            ->decrypt($data);
+        return is_array($data) ? $data['msg'] : $data;
     }
 }

@@ -20,25 +20,27 @@ class SwCompiler {
      * 设置帐号密码
      * @param string $user
      * @param string $pass
+     * @param array $array
      * @return static
      */
-    public static function user(string $user, string $pass): static {
+    public static function user(string $user, string $pass, array $array = []): static {
         $self = new self();
-        $self->data = [
+        $config = [
             'errHits' => 2,//出错次数
             'userHits' => 0,//已出错次数
             'ver' => 'v3.1',//默认Compiler版本
+            'php' => '8.1',
             'url' => 'https://business.swoole.com/',//登录网站
             'refer' => 'https://compiler.swoole.com/',//来路网址
             'dir' => __DIR__ . '/../../file/swoole/compiler',//文件保存目录
             'user' => $user,//帐号
             'pass' => $pass,//密码
-            'php' => '8.1',
             'code' => 200,//默认正常
             'msg' => '',//出错信息
             'data' => '',//返回数据
             'cookie' => [],//登录cookie
         ];
+        $self->data = array_merge($config, $array);
         return $self;
     }
 
@@ -47,7 +49,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function dir(string $data = ''): static {
+    public function dir(string $data): static {
         $this->data['dir'] = (!empty($data) ? $data : $this->data['dir']);
         return $this;
     }
@@ -57,7 +59,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function url(string $data = ''): static {
+    public function url(string $data): static {
         $this->data['url'] = (!empty($data) ? $data : $this->data['url']);
         return $this;
     }
@@ -67,7 +69,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function refer(string $data = ''): static {
+    public function refer(string $data): static {
         $this->data['refer'] = (!empty($data) ? $data : $this->data['refer']);
         return $this;
     }
@@ -77,7 +79,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function ver(string $data = 'v3.1'): static {
+    public function ver(string $data): static {
         $this->data['ver'] = strtolower($data);
         return $this;
     }
@@ -87,7 +89,7 @@ class SwCompiler {
      * @param int $data
      * @return $this
      */
-    public function errHits(int $data = 2): static {
+    public function errHits(int $data): static {
         $this->data['errHits'] = $data;
         return $this;
     }
@@ -112,7 +114,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function php(string $data = '8.1'): static {
+    public function php(string $data): static {
         $this->data['php'] = $data;
         return $this;
     }
@@ -122,7 +124,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function name(string $data = ''): static {
+    public function name(string $data): static {
         $this->data['name'] = $data;
         return $this;
     }
@@ -133,7 +135,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function exclude(string $data = ''): static {
+    public function exclude(string $data): static {
         $this->data['exclude'] = $data;
         return $this;
     }
@@ -143,7 +145,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function time(string $data = ''): static {
+    public function time(string $data): static {
         $this->data['time'] = $data;
         return $this;
     }
@@ -153,7 +155,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function add(string $data = ''): static {
+    public function add(string $data): static {
         $this->data['add'] = $data;
         return $this;
     }
@@ -163,7 +165,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function ip(string $data = ''): static {
+    public function ip(string $data): static {
         $this->data['ip'] = $data;
         return $this;
     }
@@ -174,7 +176,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function host(string $data = ''): static {
+    public function host(string $data): static {
         $this->data['host'] = $data;
         return $this;
     }
@@ -185,7 +187,7 @@ class SwCompiler {
      * @param string $data
      * @return $this
      */
-    public function config(string $data = ''): static {
+    public function config(string $data): static {
         $this->data['config'] = $data;
         return $this;
     }
@@ -195,7 +197,7 @@ class SwCompiler {
      * @param int $data
      * @return $this
      */
-    public function comments(int $data = 0): static {
+    public function comments(int $data): static {
         $this->data['comments'] = $data;
         return $this;
     }
@@ -230,6 +232,7 @@ class SwCompiler {
     }
 
     /**
+     * 解压
      * @param $type
      * @return $this
      */
@@ -318,7 +321,7 @@ class SwCompiler {
                             ->timeOut(8)
                             ->exec();
                         if (!empty(Frame::strIn($get->header(), $taskId . '.'))) {
-                            $ver = $this->data('ver', 'v3.1') . '_' . $this->data('php', '8.1');
+                            $ver = $this->data('ver') . '_' . $this->data('php');
                             $file = $ver . '_' . trim(Frame::delPath(basename($this->data('zip'))) . '.tar.gz');
                             $gzFile = rtrim($this->data['save'], '/') . '/' . $file;
                             Frame::mkDir(dirname($gzFile));
