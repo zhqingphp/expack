@@ -10,57 +10,85 @@ trait Moving {
     ];
 
     /**
-     * 动态加密
+     * 动态加密使用phpseclib3
      * @param $data
      * @param array $mode
+     * @param bool $opt
      * @return array
      */
-    public static function movEn($data, array $mode = ['aes', 'des', 'des3']): array {
-        return call_user_func_array([self::class, ($mode[rand(0, (count($mode) - 1))] ?? 'des3') . 'En'], [$data]);
+    public static function movEn($data, array $mode = ['aes', 'des', 'des3'], bool $opt = false): array {
+        return call_user_func_array([self::class, ($mode[rand(0, (count($mode) - 1))] ?? 'des3') . 'En'], [$data, ($opt ? 's' : '')]);
     }
 
     /**
+     * 动态加密使用openssl
      * @param $data
-     * @param $random
+     * @param array|string[] $mode
+     * @param bool $opt
+     * @return array
+     */
+    public static function movEns($data, array $mode = ['aes', 'des', 'des3'], bool $opt = true): array {
+        return self::movEn($data, $mode, $opt);
+    }
+
+    /**
+     * 动态解密使用phpseclib3
+     * @param $data
+     * @param mixed $random
+     * @param bool $opt
      * @return string
      */
-    public static function movDe($data, $random = null): string {
+    public static function movDe($data, mixed $random = null, bool $opt = false): string {
         if (empty($random)) {
             $random = $data['random'] ?? $random;
             $data = $data['data'] ?? $data;
         }
         $type = substr($random, 0, 1);
         if (in_array($type, self::$setMov['aes'])) {
-            return self::aesDe($data, $random);
+            $method = 'aesDe';
         } else if (in_array($type, self::$setMov['des'])) {
-            return self::desDe($data, $random);
+            $method = 'desDe';
+        } else {
+            $method = 'des3De';
         }
-        return self::des3De($data, $random);
+        return call_user_func_array([self::class, $method], [$data, $random, ($opt ? 's' : '')]);
+    }
+
+    /**
+     * 动态解密使用openssl
+     * @param $data
+     * @param mixed $random
+     * @param bool $opt
+     * @return string
+     */
+    public static function movDes($data, mixed $random = null, bool $opt = true): string {
+        return self::movDe($data, $random, $opt);
     }
 
     /**
      * aes动态加密
      * @param $data
+     * @param string $opt
      * @return array
      */
-    public static function aesEn($data): array {
+    public static function aesEn($data, string $opt = ''): array {
         $rand = self::rand();
         $iv = rand(1, 16);
         $md5 = md5($rand);
         $type = rand(1, 2);
-        return [
-            'random' => self::randInt('aes') . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
-            'data' => self::aesEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 16), ($type == 2 ? substr(md5($md5), $iv, 16) : ''))
-        ];
+        $array['random'] = self::randInt('aes') . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv);
+        $array['data'] = call_user_func_array([self::class, 'aesEncrypt' . $opt], [(is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 16), ($type == 2 ? substr(md5($md5), $iv, 16) : '')]);
+        return $array;
     }
 
     /**
      * aes动态解密
      * @param $data
      * @param $random
+     * @param string $opt
      * @return string
      */
-    public static function aesDe($data, $random = null): string {
+    public static function aesDe($data, $random = null, string $opt = ''): string {
         if (empty($random)) {
             $random = $data['random'] ?? $random;
             $data = $data['data'] ?? $data;
@@ -68,32 +96,33 @@ trait Moving {
         $md5 = md5(substr($random, 2, strlen($random) - 4));
         $iv = substr($random, -2);
         $type = substr($random, 1, 1);
-        return self::aesDecrypt($data, substr($md5, $iv, 16), ($type == 2 ? substr(md5($md5), $iv, 16) : ''));
+        return call_user_func_array([self::class, 'aesDecrypt' . $opt], [$data, substr($md5, $iv, 16), ($type == 2 ? substr(md5($md5), $iv, 16) : '')]);
     }
 
     /**
      * des动态加密
      * @param $data
+     * @param string $opt
      * @return array
      */
-    public static function desEn($data): array {
+    public static function desEn($data, string $opt = ''): array {
         $rand = self::rand();
         $iv = rand(1, 8);
         $md5 = md5($rand);
         $type = rand(1, 2);
-        return [
-            'random' => self::randInt('des') . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
-            'data' => self::desEncrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 8), ($type == 2 ? substr(md5($md5), $iv, 8) : ''))
-        ];
+        $array['random'] = self::randInt('des') . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv);
+        $array['data'] = call_user_func_array([self::class, 'desEncrypt' . $opt], [(is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 8), ($type == 2 ? substr(md5($md5), $iv, 8) : '')]);
+        return $array;
     }
 
     /**
      * des动态解密
      * @param $data
      * @param $random
+     * @param string $opt
      * @return string
      */
-    public static function desDe($data, $random = null): string {
+    public static function desDe($data, $random = null, string $opt = ''): string {
         if (empty($random)) {
             $random = $data['random'] ?? $random;
             $data = $data['data'] ?? $data;
@@ -101,32 +130,33 @@ trait Moving {
         $md5 = md5(substr($random, 2, strlen($random) - 4));
         $iv = substr($random, -2);
         $type = substr($random, 1, 1);
-        return self::desDecrypt($data, substr($md5, $iv, 8), ($type == 2 ? substr(md5($md5), $iv, 8) : ''));
+        return call_user_func_array([self::class, 'desDecrypt' . $opt], [$data, substr($md5, $iv, 8), ($type == 2 ? substr(md5($md5), $iv, 8) : '')]);
     }
 
     /**
      * des3动态加密
      * @param $data
+     * @param string $opt
      * @return array
      */
-    public static function des3En($data): array {
+    public static function des3En($data, string $opt = ''): array {
         $rand = self::rand();
         $iv = rand(1, 8);
         $md5 = md5($rand);
         $type = rand(1, 2);
-        return [
-            'random' => self::randInt('des3') . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv),
-            'data' => self::des3Encrypt((is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''))
-        ];
+        $array['random'] = self::randInt('des3') . $type . $rand . (strlen($iv) == 1 ? '0' . $iv : $iv);
+        $array['data'] = call_user_func_array([self::class, 'des3Encrypt' . $opt], [(is_array($data) ? json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : $data), substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : '')]);
+        return $array;
     }
 
     /**
      * des3动态解密
      * @param $data
      * @param $random
+     * @param string $opt
      * @return string
      */
-    public static function des3De($data, $random = null): string {
+    public static function des3De($data, $random = null, string $opt = ''): string {
         if (empty($random)) {
             $random = $data['random'] ?? $random;
             $data = $data['data'] ?? $data;
@@ -134,7 +164,7 @@ trait Moving {
         $md5 = md5(substr($random, 2, strlen($random) - 4));
         $iv = substr($random, -2);
         $type = substr($random, 1, 1);
-        return self::des3Decrypt($data, substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : ''));
+        return call_user_func_array([self::class, 'des3Decrypt' . $opt], [$data, substr($md5, $iv, 24), ($type == 2 ? substr(md5($md5), $iv, 8) : '')]);
     }
 
 

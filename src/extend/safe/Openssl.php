@@ -30,6 +30,38 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
 -----END PUBLIC KEY-----';
 
     /**
+     * 方法列表
+     * @return array
+     */
+    public static function show(): array {
+        return \openssl_get_cipher_methods();
+    }
+
+    /**
+     * 通用加密
+     * @param string $data
+     * @param string $type //可通过show查看方式
+     * @param string $key
+     * @param string $iv
+     * @return string
+     */
+    public static function opensslEncrypt(string $data, string $type, string $key, string $iv = ''): string {
+        return \openssl_encrypt($data, $type, $key, OPENSSL_RAW_DATA, $iv);
+    }
+
+    /**
+     * 通用解密
+     * @param string $data
+     * @param string $type //可通过show查看方式
+     * @param string $key
+     * @param string $iv
+     * @return string
+     */
+    public static function opensslDecrypt(string $data, string $type, string $key, string $iv = ''): string {
+        return \openssl_decrypt($data, $type, $key, OPENSSL_RAW_DATA, $iv);
+    }
+
+    /**
      * RSA私钥加密
      * @param string $data 内容
      * @param string $key 私钥
@@ -118,38 +150,6 @@ mY5cwuu1QIJTthhdGkPXk+pxV8T1DxRDr84ZXj0yrL9M4Qx8wuqfVYhEGbpKB+w9
      */
     public static function pfxVerify(string $str, string $data, string $key): int {
         return \openssl_verify($str, \base64_decode($data), $key, OPENSSL_ALGO_SHA1);
-    }
-
-    /**
-     * 通用加密
-     * @param string $data
-     * @param string $type //可通过list查看方式
-     * @param string $key
-     * @param string $iv
-     * @return string
-     */
-    public static function Encrypt(string $data, string $type, string $key, string $iv = ''): string {
-        return \openssl_encrypt($data, $type, $key, OPENSSL_RAW_DATA, $iv);
-    }
-
-    /**
-     * 通用解密
-     * @param string $data
-     * @param string $type //可通过list查看方式
-     * @param string $key
-     * @param string $iv
-     * @return string
-     */
-    public static function Decrypt(string $data, string $type, string $key, string $iv = ''): string {
-        return \openssl_decrypt($data, $type, $key, OPENSSL_RAW_DATA, $iv);
-    }
-
-    /**
-     * 方法列表
-     * @return array
-     */
-    public static function list(): array {
-        return \openssl_get_cipher_methods();
     }
 
     /**
