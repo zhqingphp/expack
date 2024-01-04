@@ -88,7 +88,7 @@ if (!function_exists('strToDate')) {
  * 13位转时间
  */
 if (!function_exists('timeToDate')) {
-    function timeToDate($time): float|int {
+    function timeToDate($time): string {
         return seekDate(strToDate($time));
     }
 }

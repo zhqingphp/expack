@@ -45,7 +45,7 @@ class Model extends \support\Model {
                     return is_callable($commit) ? $commit() : false;
                 }, $attempts);
             } catch (\Exception | \Error $e) {
-                return is_callable($rollback) ? $rollback() : false;
+                return is_callable($rollback) ? $rollback($e) : false;
             }
         } else {
             $self = new static();
@@ -54,9 +54,9 @@ class Model extends \support\Model {
                 $data = is_callable($commit) ? $commit() : true;
                 Db::connection($self->connection)->commit();
                 return $data;
-            } catch (\Illuminate\Database\QueryException $ex) {
+            } catch (\Illuminate\Database\QueryException $e) {
                 Db::connection($self->connection)->rollback();
-                return is_callable($rollback) ? $rollback() : false;
+                return is_callable($rollback) ? $rollback($e) : false;
             }
         }
     }
