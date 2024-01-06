@@ -2,6 +2,7 @@
 
 namespace zhqing\extend;
 
+use zhqing\extend\frame\Mysql;
 use zhqing\extend\frame\NewWay;
 use zhqing\extend\frame\Decompression;
 use zhqing\extend\frame\Mime;
@@ -17,7 +18,7 @@ use zhqing\extend\frame\Tool;
 use zhqing\extend\frame\Date;
 
 class Frame {
-    use Acme, File, Upload, Browser, Arrays, Decompression, Mime, Wait, Sort, Xml, Tool, NewWay, Date;
+    use Acme, File, Upload, Browser, Arrays, Decompression, Mime, Wait, Sort, Xml, Tool, NewWay, Date, Mysql;
 
     /**
      * 修改url中的get参数

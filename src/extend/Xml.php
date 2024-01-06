@@ -240,10 +240,10 @@ class Xml {
     /**
      * XMl转Array处理
      * @param $obj
-     * @param $type
+     * @param string $type
      * @return array
      */
-    protected static function toArrayHandle($obj, $type): array {
+    protected static function toArrayHandle($obj, string $type = ''): array {
         $child = $obj->childNodes;
         $arr = [];
         if ($child->length > 0) {

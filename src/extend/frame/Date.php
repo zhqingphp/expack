@@ -5,6 +5,36 @@ namespace zhqing\extend\frame;
 trait Date {
 
     /**
+     * 生成时间列表
+     * @param string|int $top //开始时间
+     * @param string|int $end //结束时间
+     * @param int $time //相隔时间
+     * @param string $type //可选top,end
+     * @param array $data
+     * @return array
+     */
+    public static function getTimeList(string|int $top, string|int $end, int $time = 10, string $type = '', array $data = []): array {
+        $topInt = is_numeric($top) ? $top : strtotime($top);
+        $endInt = is_numeric($end) ? $end : strtotime($end);
+        while (true) {
+            $top_time = date('Y-m-d H:i:s', $topInt);
+            $topInt = $topInt + $time;
+            $end_time = date('Y-m-d H:i:s', (($topInt >= $endInt) ? $endInt : $topInt));
+            if ($type == 'top') {
+                $data[] = $top_time;
+            } else if ($type == 'end') {
+                $data[] = $end_time;
+            } else {
+                $data[] = ['top' => $top_time, 'end' => $end_time];
+            }
+            if ($topInt >= $endInt) {
+                break;
+            }
+        }
+        return $data;
+    }
+
+    /**
      * 获取本周星期(1-7)的日期
      * @param int $s 要获取的星期(1-7)
      * @param int $data //当前时间
@@ -144,5 +174,74 @@ trait Date {
             }
         }
         return $data;
+    }
+
+    /**
+     * 月帐期数表列表
+     * @param int $time //系统时间
+     * @param string $date //月帐单已知年度第一期数
+     * @param array $topData
+     * @param int $j
+     * @param string $current
+     * @return array
+     */
+    public static function periodBillTime(int $time = 0, string $date = '', array $topData = [], int $j = 0, string $current = ''): array {
+        $time = (!empty($time) ? $time : (strtotime(date('Y-m-d')) - 60 * 60 * 8));
+        $start = strtotime((!empty($date) ? $date : '2020-12-28'));
+        $end = strtotime("+27 day", $start);
+        $data[date("Y-m-d", $start)] = date("Y-m-d", $end);
+        $is = 0;
+        for ($i = 1; $i <= 25; $i++) {
+            $d = $i * 28;
+            $s = strtotime("+{$d} day", $start);
+            $e = strtotime("+{$d} day", $end);
+            if ($s <= $time && $e >= $time) {
+                $current = date("Y-m-d", $s);
+                $is = $i;
+            }
+            $data[date("Y-m-d", $s)] = date("Y-m-d", $e);
+        }
+        $j = $j + 1;
+        if (empty($is)) {
+            return self::periodBillTime($time, date("Y-m-d", strtotime("+1 day", strtotime(end($data)))), $data, $j);
+        } else {
+            $data = array_slice($data, 0, $is + 4, true);
+            if ($j > 1 && count($data) <= 13) {
+                $data = array_slice($topData, count($topData) - 13, 13, true) + $data;
+            }
+        }
+        return ['list' => $data, 'start' => $current, 'end' => $data[$current]];
+    }
+
+    /**
+     * 生成月日星期几
+     * @param $time //时间
+     * @param $layer //语言
+     * @param bool $type
+     * @return string
+     */
+    public static function getWeek($time, $layer, bool $type = false): string {
+        $time = !empty($time) ? (!empty($type) ? strtotime($time) : $time) : time();
+        if ($layer == 'en-us') {
+            $weekArr = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            $week = date("d M", $time) . " (" . $weekArr[date("w", $time)] . ")";
+        } else {
+            $weekArr = ["日", "一", "二", "三", "四", "五", "六"];
+            $week = date("m月d日", $time) . " 星期" . $weekArr[date("w", $time)];
+        }
+        return $week;
+    }
+
+    /**
+     * 获取上周一和周日的时间
+     * @param string $time
+     * @return array
+     */
+    public static function getLastWeek(string $time = ''): array {
+        $time = !empty($time) ? strtotime($time) : time();
+        $w = !empty($w = date("w", $time)) ? $w : 7;
+        $start = date('Y-m-d', strtotime("-" . ($w + 6) . " days", $time));
+        $end = date('Y-m-d', strtotime("-{$w} days", $time));
+        return [$start, $end];
     }
 }
