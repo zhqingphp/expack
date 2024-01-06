@@ -45,12 +45,12 @@ trait Arrays {
 
     /**
      * 通过a.b.c.d获取数组内容
-     * @param $data //要取值的数组
+     * @param array $data //要取值的数组
      * @param string $name //支持aa.bb.cc.dd这样获取数组内容
-     * @param $default //默认值
+     * @param mixed $default //默认值
      * @return mixed
      */
-    public static function getStrArr($data, string $name, $default = null): mixed {
+    public static function getStrArr(array $data, string $name, mixed $default = null): mixed {
         if (!isset($name)) {
             return $data;
         } else if (!empty($info = self::getArr($data, $name))) {

@@ -9,8 +9,8 @@ trait Mysql {
      * 通过表单代码生成数据
      * 使用 self::codeToData(['orderStatus' => 2], self::tableToCode($tableData ?? [], ['id'])['data']);
      * @param array $data 传入的数据
-     * @param array $code 表单信息
-     * @param array $arr 返回信息
+     * @param array $code 表单信息(通过表单信息生成相关array code代码)
+     * @param array $arr 生成写入数据信息
      * @return array
      */
     public static function codeToData(array $data, array $code, array $arr = []): array {
@@ -46,7 +46,7 @@ trait Mysql {
     }
 
     /**
-     * 通过表单信息生成相关array
+     * 通过表单信息生成相关array code代码
      * @param array $data 表单信息
      * @param array $delete 排除
      * @param array $config 配置['字段类型'=>'组名']
