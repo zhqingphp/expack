@@ -10,6 +10,7 @@ class SetField extends Common {
         $this->mysql->SetFields = $this;
         return $this;
     }
+
     /**
      * 字段是否主键
      * @param bool $data

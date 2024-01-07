@@ -101,8 +101,18 @@ trait Mysql {
         }
         $content['count'] = $i;
         $content['data'] = $arr;
-        $content['php'] = self::arrayToString($arr);
+        $content['php'] = self::ArrToStr($arr);
         return $content;
+    }
+
+    /**
+     * @param array $array //要转换的array
+     * @param bool|string $name string=变量名
+     * @param bool $type //是否使用var_export, array()
+     * @return string
+     */
+    public static function ArrToStr(array $array, bool|string $name = false, bool $type = false): string {
+        return "\r\n<?php\r\n " . (is_string($name) ? "\$" . $name . "=" : "return ") . self::arrayToString($array, $type) . ";\r\n";
     }
 
     /**
@@ -118,8 +128,8 @@ trait Mysql {
         }
         ++$i;
         $branch = "\r\n";
-        $string = "[" . $branch;
         $symbol = str_repeat('  ', $i);
+        $string = "[" . $branch;
         foreach ($array as $key => $value) {
             if (is_array($value)) {
                 $string .= "{$symbol}'" . $key . "' => " . self::arrayToString($value, $type, $i) . "," . $branch;

@@ -11,8 +11,8 @@ class Common {
      * @param Mysql $mysql
      */
     public function __construct(Mysql $mysql) {
-        $this->setThis();
         $this->mysql = $mysql;
+        $this->setThis();
     }
 
     /**
