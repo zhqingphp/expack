@@ -111,7 +111,6 @@ class Exec extends Common {
         if (!empty($length)) {
             $set_type .= "(";
             $set_type .= $length;
-            ps($length . '@@@@' . $decimal);
             if (!empty($decimal)) {
                 $set_type .= "," . $decimal;
             }
