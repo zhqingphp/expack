@@ -51,6 +51,43 @@ class SetField extends Common {
         return $this;
     }
 
+    public function decimal(string|int $length = 10, string|int $decimal = 2): static {
+        $this->mysql->setConfig($this->mysql->field, ['type' => 'decimal'], 'field');
+        $this->mysql->setConfig($this->mysql->field, ['decimal' => $decimal], 'field');
+        $this->length($length);
+        return $this;
+    }
+
+    /**
+     * 设置 datetime
+     * @return $this
+     */
+    public function datetime(): static {
+        $this->mysql->setConfig($this->mysql->field, ['type' => 'datetime'], 'field');
+        return $this;
+    }
+
+    /**
+     * 设置 varchar
+     * @param string|int $data
+     * @return $this
+     */
+    public function varchar(string|int $data = '255'): static {
+        $this->mysql->setConfig($this->mysql->field, ['type' => 'varchar'], 'field');
+        $this->length($data);
+        return $this;
+    }
+
+    /**
+     * 长度
+     * @param string|int $data
+     * @return $this
+     */
+    public function length(string|int $data): static {
+        $this->mysql->setConfig($this->mysql->field, ['length' => $data], 'field');
+        return $this;
+    }
+
     /**
      * 生成创造表单SQL
      * 设置主键(第一个为id)

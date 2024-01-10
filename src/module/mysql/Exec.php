@@ -45,7 +45,7 @@ class Exec extends Common {
         $sql = "ALTER TABLE `{$table}`";
         $field = Frame::getStrArr($v, 'field', []);
         foreach ($field as $key => $val) {
-            $sql .= " ADD " . self::fieldSql($key, $val['type'], $val['comment'], $val['def'], $val['null']) . ", ";
+            $sql .= " ADD " . self::fieldSql($key, $val['type'], $val['length'], $val['decimal'], $val['comment'], $val['def'], $val['null']) . ", ";
         }
         return trim(trim($sql), ",") . ";";
     }
@@ -80,34 +80,43 @@ class Exec extends Common {
                 $null = true;
                 $primary .= ",`{$key}`";
             }
-            $sql .= "  " . self::fieldSql($key, $val['type'], $val['comment'], $val['def'], $null) . ",\r\n";
+            $sql .= "  " . self::fieldSql($key, $val['type'], $val['length'], $val['decimal'], $val['comment'], $val['def'], $null) . ",\r\n";
         }
         $primary = trim($primary, ",");
         $sql .= "  PRIMARY KEY ({$primary}) USING BTREE\r\n";
-        $sql .= ") ENGINE={$engine} AUTO_INCREMENT={$auto} DEFAULT CHARSET={$charset}" . (!empty($comment) ? "COMMENT='{$comment}'" : "");
+        $sql .= ") ENGINE={$engine} AUTO_INCREMENT={$auto} DEFAULT CHARSET={$charset}" . (!empty($comment) ? " COMMENT='{$comment}'" : "");
         return $sql . ";";
     }
 
     /**
      * 设置字段
      * @param string $field 字段
-     * @param string $type 类型(长度)
+     * @param string $type 类型
+     * @param string|int $length 长度
+     * @param string|int $decimal 小数点
      * @param string|null|int $comment 注释
      * @param string|null|int $def 默认值
      * @param bool $null 不为空?  true=必须有值,false=允许空值
      * @return string
      */
-    protected static function fieldSql(string $field, string $type, string|null|int $comment, string|null|int $def, bool $null): string {
+    protected static function fieldSql(string $field, string $type, string|int $length, string|int $decimal, string|null|int $comment, string|null|int $def, bool $null): string {
         if (is_null($def)) {
             //数字默认值为空自动设0
             $intArr = ['tinyint', 'smallint', 'mediumint', 'int', 'integer', 'bigint', 'float', 'double', 'decimal'];
-            foreach ($intArr as $v) {
-                if (str_starts_with($type, $v)) {
-                    $def = 0;
-                    break;
-                }
+            if (in_array($type, $intArr)) {
+                $def = 0;
             }
         }
-        return "`{$field}` {$type}" . (!empty($null) ? " NOT NULL" : "") . (is_null($def) ? "" : " DEFAULT {$def}") . (!empty($comment) ? " COMMENT '{$comment}'" : "");
+        $set_type = '';
+        if (!empty($length)) {
+            $set_type .= "(";
+            $set_type .= $length;
+            ps($length . '@@@@' . $decimal);
+            if (!empty($decimal)) {
+                $set_type .= "," . $decimal;
+            }
+            $set_type .= ")";
+        }
+        return "`{$field}` {$type}{$set_type}" . (!empty($null) ? " NOT NULL" : "") . (is_null($def) ? "" : " DEFAULT {$def}") . (!empty($comment) ? " COMMENT '{$comment}'" : "");
     }
 }

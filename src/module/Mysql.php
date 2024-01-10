@@ -23,6 +23,32 @@ class Mysql {
     public Exec $Execs;
 
     /**
+     * 使用例
+     */
+    public static function demo() {
+        $self = new Mysql('back_');
+        $demo = $self->table('demo1');
+        $demo->field('aa', 'int', 11);
+        $demo->field('bb', 'int', 11)->key(true)->def(0)->null(true)->comment('测试');
+        $demo->field('cc', 'int', 11);
+        $demo->row();
+
+        $demo = $self->table('demo2');
+        $demo->field('aa1', 'int(11)');
+        $demo->field('bb1', 'int(11)')->key(true);
+        $demo->field('bb3')->varchar(200);
+        $demo->field('money')->decimal(40, 8);
+        $demo->field('money1', 'decimal', 60, 4);
+        $demo->create('测试');
+
+        $demo = $self->table('demo3');
+        $demo->field('aa1', 'int(11)');
+        $demo->field('bb1', 'int(11)');
+        $demo->row();
+        ps($self->exec());
+    }
+
+    /**
      * 获取数据库信息
      * @param string $name
      * @return string
