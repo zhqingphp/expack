@@ -38,7 +38,9 @@ trait Mysql {
                     } else if ($key == 'datetime' || $key == 'timestamp') {
                         $content = $date($content, 'Y-m-d H:i:s');
                     }
-                    $arr[$name] = $content;
+                    if (!empty($content)) {
+                        $arr[$name] = $content;
+                    }
                 }
             }
         }

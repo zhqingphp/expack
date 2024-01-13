@@ -668,4 +668,26 @@ class Frame {
         }
         return $array;
     }
+
+    /**
+     * 执行方法
+     * @param mixed $self
+     * @param string $api_method
+     * @param array $parameter
+     * @param mixed $error
+     * @param mixed $backup
+     * @return mixed
+     */
+    public static function callArray(mixed $self, string $api_method, array $parameter = [], mixed $error = null, mixed $backup = null): mixed {
+        try {
+            return call_user_func_array([$self, $api_method], $parameter);
+        } catch (\Exception | \Error $e) {
+            if (!empty($error) && is_callable($error)) {
+                return $error($e);
+            } else {
+                var_dump($e);
+                return false;
+            }
+        }
+    }
 }
