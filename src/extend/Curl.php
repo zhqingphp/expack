@@ -420,6 +420,41 @@ class Curl {
         echo $html;
     }
 
+
+    /**
+     * @param $type $json
+     * @return string|array
+     */
+    public function dump(bool $type = false): string|array {
+        $method = ($this->setData['mode'] ?? 'GET');
+        if (!empty(!empty($type))) {
+            $data = "<textarea rows='30' cols='100%' style='width: 99%;height: 80%;'>";
+            $data .= "1.Request\r\n";
+            $data .= "1.1 url：" . ($this->curlSet[CURLOPT_URL] ?? '') . "\r\n\r\n";
+            $data .= "1.2 method：" . $method . "\r\n\r\n";
+            $data .= "1.3 header：" . print_r(($this->curlSet[CURLOPT_HTTPHEADER] ?? []), true) . "\r\n\r\n";
+            if (($method != 'GET')) {
+                $data .= "1.4 parameter：\r\n" . print_r(($this->curlSet[CURLOPT_POSTFIELDS] ?? []), true) . "\r\n\r\n";
+            }
+            $data .= "\r\n2.Response\r\n";
+            $data .= "2.1 header：\r\n" . $this->header . "\r\n\r\n";
+            $data .= "2.2 body：\r\n" . $this->body . "\r\n\r\n";
+            $data .= "</textarea>";
+        } else {
+            $data['request'] = [
+                'url' => $this->curlSet[CURLOPT_URL] ?? '',
+                'method' => ($this->setData['mode'] ?? 'GET'),
+                'header' => $this->curlSet[CURLOPT_HTTPHEADER] ?? [],
+                'data' => ($method != 'GET' ? ($this->curlSet[CURLOPT_POSTFIELDS] ?? []) : [])
+            ];
+            $data['response'] = [
+                'header' => $this->header,
+                'body' => $this->body
+            ];
+        }
+        return $data;
+    }
+
     /**
      * 接收内容(exec后执行)
      * @return string
@@ -576,9 +611,14 @@ class Curl {
         foreach ($this->setData['url'] as $k => $v) {
             $this->setData['domain'] = $v;
             $this->setData['id'] = $k;
-            $this->setData['path'] = ltrim(($this->setData['path'] ?? ''), '/');
-            $newUrl = (empty($this->setData['path']) ? $v : (str_ends_with($v, '/') ? $v : ($v . '/'))) . $this->setData['path'];
-            $newUrl = (($this->setData['mode'] == 'GET') ? ($this->handleGetUrl($newUrl, $this->setData['data'])) : $newUrl);
+            $newUrl = $v;
+            if (!empty(($this->setData['path'] ?? ''))) {
+                $this->setData['path'] = ltrim(($this->setData['path'] ?? ''), '/');
+                $newUrl = (str_ends_with($newUrl, '/') ? $newUrl : ($newUrl . '/')) . $this->setData['path'];
+            }
+            if (($this->setData['mode'] == 'GET') && !empty($this->setData['data'])) {
+                $newUrl = $this->handleGetUrl($newUrl, $this->setData['data']);
+            }
             $this->setOriginHeader($newUrl);
             if (!empty($fun($newUrl))) {
                 return;
@@ -628,6 +668,7 @@ class Curl {
         }
         if (!empty($multi = ($this->setData['multi'] ?? ''))) {
             $data = Frame::formData($multi, $this->setData['data']);
+            $this->setData['data'] = $data;
             $this->curlSet[CURLOPT_POSTFIELDS] = $data;
             $this->setHead([
                 'Content-Length' => strlen($data),

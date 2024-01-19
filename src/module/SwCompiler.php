@@ -313,9 +313,9 @@ class SwCompiler {
                     $location = Frame::getStrArr($header, 'location');
                     $task = explode('?task_id=', $location);
                     if (!empty($taskId = Frame::getStrArr($task, 1))) {
-                        $get = Curl::get(trim($this->data('refer'), '/'))
+                        $get = Curl::get(trim($this->data('refer'), '/'), ['id' => $taskId])
                             ->referer(trim($this->data('refer'), '/') . '/encryptor/task/')
-                            ->path('/encryptor/get_code/?id=' . $taskId)
+                            ->path('/encryptor/get_code/')
                             ->cookie($this->data('cookie'))
                             ->timeConnect(8)
                             ->timeOut(8)
