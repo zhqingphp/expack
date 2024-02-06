@@ -15,7 +15,7 @@
 *
 * composer require webman/gateway-worker
 
-* composer require zhqingphp/bitwasp:^3.0
+* composer require zhqingphp/bitwasp:^1.0
 
 #### 使用Safe要安装
 
