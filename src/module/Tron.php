@@ -22,14 +22,14 @@ use BitWasp\Bitcoin\Key\Factory\PrivateKeyFactory;
  * 安装后使用
  */
 class Tron {
-    public static int $TRON_DECIMALS = 6;
-    public static string $TRON_PRO_API_KEY = "";
-    public static string $TRON_API_HOST = "https://api.trongrid.io";
-    public static string $TRON_WEBSITE_ADDRESS = 'https://tronscan.org';
-    public static string $TRON_TRON_ADDRESS = 'https://apiasia.tronscan.io:5566';
-    public static string $TRON_CONTRACT_ADDRESS = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
     public Trons $tron;
     public TRC20Contract $trc;
+    public int $TRON_DECIMALS = 6;
+    public string $TRON_PRO_API_KEY;
+    public string $TRON_API_HOST = "https://api.trongrid.io";
+    public string $TRON_WEBSITE_ADDRESS = 'https://tronscan.org';
+    public string $TRON_TRON_ADDRESS = 'https://apiasia.tronscan.io:5566';
+    public string $TRON_CONTRACT_ADDRESS = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
     /**
      * 生成助记词
@@ -87,7 +87,7 @@ class Tron {
      * @return string
      */
     public function publicKeyToAddress(string $publicKey): string {
-        return $this->tron->getAddressHex($this->tron->hexString2Utf8($publicKey));
+        return $this->tron()->getAddressHex($this->tron()->hexString2Utf8($publicKey));
     }
 
     /**
@@ -96,7 +96,7 @@ class Tron {
      * @return string
      */
     public function hexToAddress($address_hex): string {
-        return $this->tron->fromHex($address_hex);
+        return $this->tron()->fromHex($address_hex);
     }
 
     /**
@@ -105,7 +105,7 @@ class Tron {
      * @return string
      */
     public function addressToHex($address): string {
-        return $this->tron->toHex($address);
+        return $this->tron()->toHex($address);
     }
 
     /**
@@ -123,7 +123,7 @@ class Tron {
         $data['public'] = $this->privateKeyToPublicKey($data['private']);
         $data['hex'] = $this->publicKeyToAddress($data['public']);
         $data['address'] = $this->hexToAddress($data['hex']);
-        $data['link'] = trim(self::$TRON_WEBSITE_ADDRESS, '/') . '/#/address/' . $data['address'] . '/transfers';//钱包详细
+        $data['link'] = trim($this->TRON_WEBSITE_ADDRESS, '/') . '/#/address/' . $data['address'] . '/transfers';//钱包详细
         return $data;
     }
 
@@ -138,7 +138,7 @@ class Tron {
         $data['public'] = $this->privateKeyToPublicKey($data['private']);
         $data['hex'] = $this->publicKeyToAddress($data['public']);
         $data['address'] = $this->hexToAddress($data['hex']);
-        $data['link'] = trim(self::$TRON_WEBSITE_ADDRESS, '/') . '/#/address/' . $data['address'] . '/transfers';//钱包详细
+        $data['link'] = trim($this->TRON_WEBSITE_ADDRESS, '/') . '/#/address/' . $data['address'] . '/transfers';//钱包详细
         return $data;
     }
 
@@ -152,7 +152,7 @@ class Tron {
         $data['public'] = $this->privateKeyToPublicKey($data['private']);
         $data['hex'] = $this->publicKeyToAddress($data['public']);
         $data['address'] = $this->hexToAddress($data['hex']);
-        $data['link'] = trim(self::$TRON_WEBSITE_ADDRESS, '/') . '/#/address/' . $data['address'] . '/transfers';//钱包详细
+        $data['link'] = trim($this->TRON_WEBSITE_ADDRESS, '/') . '/#/address/' . $data['address'] . '/transfers';//钱包详细
         return $data;
     }
 
@@ -162,7 +162,7 @@ class Tron {
      * @return bool true=正确
      */
     public function isAddress(string $address): bool {
-        return $this->tron->isAddress($address);
+        return $this->tron()->isAddress($address);
     }
 
     /**
@@ -188,14 +188,14 @@ class Tron {
      */
     public function getTrc20Balance(string $address): string {
         $hexAddress = $this->addressToHex($address);
-        $body = $this->tron->getManager()->request('wallet/triggersmartcontract', [
-            'contract_address' => $this->tron->address2HexString(self::$TRON_CONTRACT_ADDRESS),
+        $body = $this->tron()->getManager()->request('wallet/triggersmartcontract', [
+            'contract_address' => $this->tron()->address2HexString($this->TRON_CONTRACT_ADDRESS),
             'function_selector' => 'balanceOf(address)',
             'parameter' => $this->toAddressFormat($hexAddress),
             'owner_address' => $hexAddress,
         ]);
         if (isset($body['result']['code'])) {
-            return $this->tron->hexString2Utf8(Frame::getStrArr($body, 'result.message'));
+            return $this->tron()->hexString2Utf8(Frame::getStrArr($body, 'result.message'));
         }
         return $this->toAmount(base_convert(Frame::getStrArr($body, 'constant_result.0'), 16, 10));
     }
@@ -208,12 +208,12 @@ class Tron {
      * @return array
      */
     public function trc20Transfer($privateKey, $address, $amount): array {
-        $this->tron->setPrivateKey($privateKey);
+        $this->tron()->setPrivateKey($privateKey);
         $wallet = $this->privateToWallet($privateKey);
-        $this->tron->setAddress($wallet['address']);
+        $this->tron()->setAddress($wallet['address']);
         $data = $this->trc()->transfer($address, $amount);;
         if (!empty($message = Frame::getStrArr($data, 'message'))) {
-            $data['error'] = $this->tron->hexString2Utf8($message);
+            $data['error'] = $this->tron()->hexString2Utf8($message);
         }
         return $data;
     }
@@ -232,7 +232,7 @@ class Tron {
      * @return string
      */
     public function getTrxBalance(string $address): string {
-        return $this->toAmount($this->tron->getBalance($address));
+        return $this->toAmount($this->tron()->getBalance($address));
     }
 
     /**
@@ -244,11 +244,11 @@ class Tron {
      * @return array
      */
     public function trxTransfer(string $privateKey, string $address, int|float $amount, string $content = ''): array {
-        $this->tron->setPrivateKey($privateKey);
+        $this->tron()->setPrivateKey($privateKey);
         $wallet = $this->privateToWallet($privateKey);
-        $data = $this->tron->sendTrx($address, $amount, $wallet['address'], $content);
+        $data = $this->tron()->sendTrx($address, $amount, $wallet['address'], $content);
         if (!empty($message = Frame::getStrArr($data, 'message'))) {
-            $data['error'] = $this->tron->hexString2Utf8($message);
+            $data['error'] = $this->tron()->hexString2Utf8($message);
         }
         return $data;
     }
@@ -277,7 +277,7 @@ class Tron {
      * @return array
      */
     public function getAccountResources(string $address): array {
-        return $this->tron->getAccountResources($address);
+        return $this->tron()->getAccountResources($address);
     }
 
     /**
@@ -285,7 +285,7 @@ class Tron {
      * @return array
      */
     public function blockNumber(): array {
-        return $this->tron->getCurrentBlock();
+        return $this->tron()->getCurrentBlock();
     }
 
     /**
@@ -294,7 +294,7 @@ class Tron {
      * @return array
      */
     public function blockByNumber(string|int $blockID): array {
-        return $this->tron->getBlockByNumber($blockID);
+        return $this->tron()->getBlockByNumber($blockID);
     }
 
     /**
@@ -304,7 +304,7 @@ class Tron {
      * @return string
      */
     public function toAmount($data, int $scale = 0): string {
-        $scale = ($scale > 0 ? $scale : self::$TRON_DECIMALS);
+        $scale = ($scale > 0 ? $scale : $this->TRON_DECIMALS);
         return (new BcNumber($data))->divide(pow(10, $scale), $scale)->value();
     }
 
@@ -323,40 +323,18 @@ class Tron {
     }
 
     /**
-     * @param string $key
-     * @param null $tron
-     */
-    public function __construct(string $key = '', $tron = null) {
-        if (empty($tron)) {
-            $key = (!empty($key) ? $key : self::$TRON_PRO_API_KEY);
-            $header = (!empty($key) ? ['TRON-PRO-API-KEY' => $key] : []);
-            $HttpProvider = new HttpProvider(self::$TRON_API_HOST, 30000, false, false, $header);
-            $tron = new Trons($HttpProvider, $HttpProvider, $HttpProvider, $HttpProvider, $HttpProvider);
-        }
-        $this->tron = $tron;
-    }
-
-    /**
-     * @return TRC20Contract
-     */
-    public function trc(): TRC20Contract {
-        $this->trc = $this->tron->contract(self::$TRON_CONTRACT_ADDRESS);
-        return $this->trc;
-    }
-
-    /**
      * 查询交易手续费
      * @param string $hash 交易哈希号
      * @return array
      */
     public function getTransactionInfo(string $hash): array {
-        $array = $this->tron->getTransactionInfo($hash);
+        $array = $this->tron()->getTransactionInfo($hash);
         $arr['status'] = $array['receipt']['result'] ?? '';//状态
         $arr['trx'] = $this->toAmount(($array['receipt']['net_fee'] ?? 0));//消耗TRX费用
         $arr['energy'] = $array['receipt']['energy_usage_total'] ?? ($array['receipt']['energy_usage'] ?? 0);//消耗带宽
         $arr['amount'] = $this->toAmount(base_convert(substr(($array['log'][0]['data'] ?? 0), -64), 16, 10));//交易数量
         $arr['hash'] = $array['id'] ?? $hash;//交易哈希号
-        $arr['link'] = trim(self::$TRON_WEBSITE_ADDRESS, '/') . '/#/transaction/' . $arr['hash'];//交易详细
+        $arr['link'] = trim($this->TRON_WEBSITE_ADDRESS, '/') . '/#/transaction/' . $arr['hash'];//交易详细
         $arr['body'] = $array;
         return $arr;
     }
@@ -368,7 +346,7 @@ class Tron {
      * @return array
      */
     public function TransactionShow(string $hash): array {
-        $body = $this->tron->getTransaction($hash);
+        $body = $this->tron()->getTransaction($hash);
         $value = Frame::getStrArr($body, 'raw_data.contract.0.parameter.value');
         if (strlen(($value['data'] ?? '')) > 64) {
             $data = substr(Frame::getStrArr($value, 'data'), -64);
@@ -380,7 +358,7 @@ class Tron {
         $array['amount'] = $this->toAmount($money);
         $array['hash'] = Frame::getStrArr($body, 'txID');
         $array['from'] = $this->hexToAddress(Frame::getStrArr($value, 'owner_address', ''));//付款地址
-        $array['link'] = trim(self::$TRON_WEBSITE_ADDRESS, '/') . '/#/transaction/' . $hash;
+        $array['link'] = trim($this->TRON_WEBSITE_ADDRESS, '/') . '/#/transaction/' . $hash;
         $array['body'] = $body;
         return $array;
     }
@@ -398,7 +376,7 @@ class Tron {
             if (is_string($limit)) {
                 $url = $limit;
             } else {
-                $url = trim(self::$TRON_API_HOST, '/') . '/v1/accounts/' . $address . '/transactions/trc20?limit=' . $limit . '&contract_address=' . self::$TRON_CONTRACT_ADDRESS;
+                $url = trim($this->TRON_API_HOST, '/') . '/v1/accounts/' . $address . '/transactions/trc20?limit=' . $limit . '&contract_address=' . $this->TRON_CONTRACT_ADDRESS;
             }
             $curl = Curl::get($url)->timeOut(5)->timeConnect(5)->exec();
             $data = Frame::isJson($curl->body());
@@ -431,13 +409,14 @@ class Tron {
             $arr['date'] = seekDate($arr['time']);//北京交易时间
             $arr['from'] = Frame::getStrArr($v, 'from', '');//付款地址
             $arr['to'] = Frame::getStrArr($v, 'to', '');//收款地址
-            $arr['amount'] = $this->toAmount(Frame::getStrArr($v, 'value', 0), Frame::getStrArr($v, 'token_info.decimals', 0));//金额
+            $arr['amount'] = $this->toMoney(Frame::getStrArr($v, 'value', 0), Frame::getStrArr($v, 'token_info.decimals', 0));//金额
             $arr['type'] = ((strtolower($arr['to']) == strtolower($address)) ? 1 : 2);//1=转入,2=转出
-            $arr['link'] = trim(self::$TRON_WEBSITE_ADDRESS, '/') . '/#/transaction/' . $arr['hash'];//交易详细
+            $arr['link'] = trim($this->TRON_WEBSITE_ADDRESS, '/') . '/#/transaction/' . $arr['hash'];//交易详细
             $array['data'][] = $arr;
         }
-        $array['count'] = count($array['data']);
+        $array['count'] = count(($array['data'] ?? []));
         $array['next'] = ($data['next'] ?? []);
+        $array['time'] = ($data['time'] ?? seekDate());
         return $array;
     }
 
@@ -452,7 +431,7 @@ class Tron {
      * @return array
      */
     public function getAllTransaction($address, int $start = 0, int $limit = 50, string $count = 'true', string $sort = '-timestamp'): array {
-        $url = trim(self::$TRON_TRON_ADDRESS, '/') . "/api/transaction?sort={$sort}&count={$count}&limit={$limit}&start={$start}&address=" . $address;
+        $url = trim($this->TRON_TRON_ADDRESS, '/') . "/api/transaction?sort={$sort}&count={$count}&limit={$limit}&start={$start}&address=" . $address;
         $curl = Curl::get($url)->timeOut(5)->timeConnect(5)->referer()->exec();
         return Frame::isJson($curl->body());
     }
@@ -469,7 +448,7 @@ class Tron {
      */
     public function getAllTrade(string $address, int $start = 0, int $limit = 50, string $count = 'true', string $sort = '-timestamp', array $array = []): array {
         $self = $this->getAllTransaction($address, $start, $limit, $count, $sort);
-        if (!empty($data = $self['data'])) {
+        if (!empty($data = ($self['data'] ?? []))) {
             $typeName = [
                 1 => 'trx',//trx
                 2 => 'trc10',//trc10
@@ -488,21 +467,66 @@ class Tron {
                 $arr['time'] = strToDate($arr['timestamp']) + 60 * 60 * 8;//交易时间+8小时等北京时间
                 $arr['date'] = seekDate($arr['time']);//北京交易时间
                 $arr['from'] = Frame::getStrArr($v, 'contractData.owner_address', '');//付款地址
+                $scale = Frame::getStrArr($v, 'tokenInfo.tokenDecimal', 0);
                 if ($contractType == 31) {
                     $arr['to'] = Frame::getStrArr($v, 'trigger_info.parameter._to', Frame::getStrArr($v, 'contractData.contract_address', ''));//收款地址
                     $amount = Frame::getStrArr($v, 'contractData.data', '');
-                    $arr['amount'] = $this->toAmount(base_convert(substr($amount, -64), 16, 10));
+                    $arr['amount'] = $this->toMoney(base_convert(substr($amount, -64), 16, 10), $scale);
                 } else {
                     $arr['to'] = Frame::getStrArr($v, 'toAddress', Frame::getStrArr($v, 'contractData.to_address', ''));//收款地址
-                    $arr['amount'] = $this->toAmount(Frame::getStrArr($v, 'contractData.amount', ''));
+                    $arr['amount'] = $this->toMoney(Frame::getStrArr($v, 'contractData.amount', ''), $scale);
                 }
                 $arr['type'] = ((strtolower($arr['from']) == strtolower($address)) ? 2 : 1);//1=转入,2=转出
-                $arr['link'] = trim(self::$TRON_WEBSITE_ADDRESS, '/') . '/#/transaction/' . $arr['hash'];//交易详细
+                $arr['link'] = trim($this->TRON_WEBSITE_ADDRESS, '/') . '/#/transaction/' . $arr['hash'];//交易详细
                 $arr['ret_status'] = strtolower(Frame::getStrArr($v, 'contractRet', ''));//状态[OUT_OF_ENERGY,SUCCESS]
                 $array['data'][] = $arr;
             }
         }
-        $array['count'] = count($array['data']);
+        $array['page'] = $start;
+        $array['limit'] = $limit;
+        $array['count'] = count(($array['data'] ?? []));
+        $array['total'] = $self['total'] ?? 0;
+        $array['rangeTotal'] = $self['rangeTotal'] ?? 0;
+        $array['time'] = ($data['time'] ?? seekDate());
         return $array;
+    }
+
+    /**
+     * @param string $key
+     */
+    public function __construct(string $key = '') {
+        $this->TRON_PRO_API_KEY = $key;
+    }
+
+    /**
+     * @return TRC20Contract
+     */
+    public function trc(): TRC20Contract {
+        if (empty($this->trc)) {
+            $this->trc = $this->tron()->contract($this->TRON_CONTRACT_ADDRESS);
+        }
+        return $this->trc;
+    }
+
+    /**
+     * @return Trons
+     */
+    public function tron(): Trons {
+        if (empty($this->tron)) {
+            $header = (!empty($key) ? ['TRON-PRO-API-KEY' => $this->TRON_PRO_API_KEY] : []);
+            $HttpProvider = new HttpProvider($this->TRON_API_HOST, 30000, false, false, $header);
+            $this->tron = new Trons($HttpProvider, $HttpProvider, $HttpProvider, $HttpProvider, $HttpProvider);
+        }
+        return $this->tron;
+    }
+
+    /**
+     * @param $data
+     * @param int $scale
+     * @return string
+     */
+    public function toMoney($data, int $scale = 0) {
+        $scale = ($scale > 0 ? $scale : $this->TRON_DECIMALS);
+        return Frame::money(((!empty($data) ? $data : 0) / pow(10, $scale)), $scale, '');
     }
 }
