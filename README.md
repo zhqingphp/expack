@@ -15,9 +15,15 @@
 *
 * composer require webman/gateway-worker
 
-* composer require zhqingphp/bitwasp:^1.0
-
 #### 使用Safe要安装
 
 * composer require phpseclib/phpseclib:~3.0
 * https://github.com/phpseclib/phpseclib
+
+#### 使用Tron要安装
+
+* composer require zhqingphp/bitwasp:^1.0
+* composer require pleonasm/merkle-tree composer/semver lastguest/murmurhash mdanter/ecc:^1.0 bitwasp/buffertools
+  bitwasp/bech32 phpunit/phpunit:^10 squizlabs/php_codesniffer:^3.0 nbobtc/bitcoind-php bitwasp/secp256k1-php
+  bitwasp/bitcoinconsensus guzzlehttp/guzzle kornrunner/keccak phpseclib/phpseclib kornrunner/secp256k1
+  simplito/elliptic-php
