@@ -49,6 +49,36 @@ class Mysql {
     }
 
     /**
+     * [['bet_amount', 'id = 1 || id = 2'], ['bet_amount@aa', 'id = 1 || id = 2'], ['bet_amount@bet'], ['bet_amount']]
+     * @param string|array $field
+     * @return string
+     */
+    public static function sumRaw(string|array $field): string {
+        $sumWay = function ($field, $alias = '', $where = '') {
+            $alias = (!empty($alias) ? $alias : $field);
+            if (!empty($where)) {
+                $sum = "SUM(CASE WHEN " . $where . " THEN " . $field . " ELSE 0 END) AS " . $alias . ",";
+            } else {
+                $sum = "SUM(" . $field . ") AS " . $alias . ",";
+            }
+            return $sum;
+        };
+        if (is_array($field)) {
+            $sum = '';
+            $data = (Frame::arrLevel($field) == 1) ? [$field] : $field;
+            foreach ($data as $v) {
+                if (!empty($key = ($v[0] ?? ''))) {
+                    $arr = explode('@', $key);
+                    $sum .= $sumWay(($arr[0] ?? ''), ($arr[1] ?? ''), ($v[1] ?? ''));
+                }
+            }
+        } else {
+            $sum = $sumWay($field);
+        }
+        return trim($sum, ',');
+    }
+
+    /**
      * 获取数据库信息
      * @param string $name
      * @return string
