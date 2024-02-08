@@ -24,6 +24,6 @@
 
 * composer require zhqingphp/bitwasp:^1.0
 * composer require pleonasm/merkle-tree composer/semver lastguest/murmurhash mdanter/ecc:^1.0 bitwasp/buffertools
-  bitwasp/bech32 phpunit/phpunit:^10 squizlabs/php_codesniffer:^3.0 nbobtc/bitcoind-php bitwasp/secp256k1-php
-  bitwasp/bitcoinconsensus guzzlehttp/guzzle kornrunner/keccak phpseclib/phpseclib kornrunner/secp256k1
-  simplito/elliptic-php
+  composer require bitwasp/bech32 phpunit/phpunit:^10 squizlabs/php_codesniffer:^3.0 nbobtc/bitcoind-php bitwasp/secp256k1-php
+  composer require bitwasp/bitcoinconsensus guzzlehttp/guzzle kornrunner/keccak phpseclib/phpseclib kornrunner/secp256k1
+  composer require simplito/elliptic-php
