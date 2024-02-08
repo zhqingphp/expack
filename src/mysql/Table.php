@@ -22,7 +22,7 @@ trait Table {
                 $content = static::getStrArr($data, $name, static::getStrArr($v, 'default', ''));
                 if (!empty($content) || static::getStrArr($v, 'nullable') == 'no') {
                     if ($key == 'decimal') {
-                        $content = static::decimal(($content ?: 0), static::getStrArr($v, 'scale', 2), '');
+                        $content = static::decimal(($content ?: 0), static::getStrArr($v, 'scale', 2));
                     } else if ($key == 'int') {
                         $content = ($content ?: 0);
                     } else if ($key == 'blob' || $key == 'json') {

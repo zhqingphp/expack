@@ -191,7 +191,7 @@ trait Common {
      * @param string $thousands
      * @return string
      */
-    public static function decimal($int, int $decimals = 2, string $thousands = ',', string $separator = '.'): string {
+    public static function decimal($int, int $decimals = 2, string $thousands = '', string $separator = '.'): string {
         return number_format($int, $decimals, $separator, $thousands);
     }
 

@@ -35,8 +35,7 @@ trait Import {
                         $sql .= " " . $v;
                         if (str_ends_with(trim($v), ';')) {
                             $exec = trim($sql) . ';';
-                            $res = $this->exec(stripslashes($exec));
-                            //$res = $this->exec($exec);
+                            $res = $this->exec($this->strips($exec));
                             if (str_starts_with($exec, 'DROP')) {
                                 if ($res !== false) {
                                     ++$ds;

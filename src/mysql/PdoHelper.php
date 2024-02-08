@@ -89,6 +89,26 @@ class PdoHelper {
     }
 
     /**
+     * 转义字符串
+     * @param $string
+     * @return string
+     */
+    public function quote($string): string {
+        //addslashes
+        return $this->pdo()->quote($string);
+    }
+
+    /**
+     * 反转义字符串
+     * @param $string
+     * @return string
+     */
+    public function strips($string): string {
+        //stripslashes
+        return stripslashes($string);
+    }
+
+    /**
      * 关闭链接
      */
     public function close() {
