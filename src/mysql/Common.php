@@ -204,4 +204,15 @@ trait Common {
     public static function json($data, bool $type = true): bool|string {
         return $type ? \json_encode($data, JSON_NUMERIC_CHECK + JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : \json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES);
     }
+
+    /**
+     * 判断字符串是否json,返回array
+     * @param mixed $data
+     * @param bool $type
+     * @return mixed
+     */
+    public static function isJson(mixed $data, bool $type = true): mixed {
+        $data = \json_decode((is_string($data) ? ($data ?: '') : ''), $type);
+        return (($data && \is_object($data)) || (\is_array($data) && $data)) ? $data : [];
+    }
 }

@@ -57,6 +57,13 @@ trait Export {
                                     } else if ($value == null) {
                                         $values .= "NULL, ";
                                     } else {
+                                        //$values .= $this->pdo()->quote($value) . ", ";
+                                        if (!empty($jsonArr = static::isJson($value))) {
+                                            $formattedJson = json_encode($jsonArr, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                                            $formattedJson = preg_replace('/^\s+|\s+$/m', '', $formattedJson);
+                                            $value = preg_replace('/\s+/', '', $formattedJson);
+                                        }
+                                        $value = addslashes($value);
                                         $values .= "'{$value}', ";
                                     }
                                     $field .= "`{$key}`, ";
