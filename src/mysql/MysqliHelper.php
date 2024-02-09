@@ -113,7 +113,7 @@ class MysqliHelper {
     }
 
     /**
-     * 反转义字符串
+     * 反转义字符串 stripslashes
      * @param $string
      * @return string
      */
