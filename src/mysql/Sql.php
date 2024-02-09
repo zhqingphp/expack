@@ -38,9 +38,10 @@ trait Sql {
     /**
      * @param string $table 表单名
      * @param array $array
+     * @param bool $base 是否添加数据库名
      * @return string
      */
-    public function add(string $table, array $array): string {
+    public function add(string $table, array $array, bool $base = false): string {
         $demo = [
             'id' => ['name' => 'id', 'type' => 'int(11)'],//主键
             'engine' => 'InnoDB',//引擎
@@ -68,7 +69,7 @@ trait Sql {
                 ]
             ]
         ];
-        $tables = $this->getFullTable($table);
+        $tables = $this->getFullTable($table, $base);
         $sql = "DROP TABLE IF EXISTS `{$tables}`;\r\n";
         $sql .= "CREATE TABLE `{$tables}` (\r\n";
         $sql .= "  `" . ($array['id']['name'] ?? 'id') . "` " . ($array['id']['type'] ?? 'int(11)') . " NOT NULL AUTO_INCREMENT,\r\n";
@@ -96,17 +97,18 @@ trait Sql {
     /**
      * 删除表单
      * @param string|array $table 表单名
+     * @param bool $base 是否添加数据库名
      * @return string
      */
-    public function delete(string|array $table): string {
+    public function delete(string|array $table, bool $base = false): string {
         if (is_array($table)) {
             $sql = "";
             foreach ($table as $v) {
-                $sql .= "DROP TABLE IF EXISTS `" . $this->getFullTable($v) . "`;";
+                $sql .= "DROP TABLE IF EXISTS `" . $this->getFullTable($v, $base) . "`;";
                 $sql .= "\r\n";
             }
         } else {
-            $sql = "DROP TABLE IF EXISTS `" . $this->getFullTable($table) . "`;";
+            $sql = "DROP TABLE IF EXISTS `" . $this->getFullTable($table, $base) . "`;";
         }
         return $sql;
     }
@@ -115,9 +117,10 @@ trait Sql {
      * 添加表单列
      * @param string $table 表单名
      * @param array $array
+     * @param bool $base 是否添加数据库名
      * @return string
      */
-    public function row(string $table, array $array): string {
+    public function row(string $table, array $array, bool $base = false): string {
         $demo = [
             'field' => [
                 'type' => 'int(11)', //字段类型
@@ -128,7 +131,7 @@ trait Sql {
                 'comment' => 'demo field'//字段备注
             ]
         ];
-        $sql = "ALTER TABLE `" . $this->getFullTable($table) . "`";
+        $sql = "ALTER TABLE `" . $this->getFullTable($table, $base) . "`";
         foreach ($array as $k => $v) {
             $sql .= " ADD `" . $k . "`";
             //
@@ -147,14 +150,47 @@ trait Sql {
      * 删除表单列
      * @param string $table 表单名
      * @param array|string $array ['field1','field2'],field1,field2
+     * @param bool $base 是否添加数据库名
      * @return string
      */
-    public function del(string $table, array|string $array): string {
-        $sql = "ALTER TABLE `" . $this->getFullTable($table) . "`";
+    public function del(string $table, array|string $array, bool $base = false): string {
+        $sql = "ALTER TABLE `" . $this->getFullTable($table, $base) . "`";
         $array = is_array($array) ? $array : explode(',', $array);
         foreach ($array as $v) {
             $sql .= " DROP COLUMN `" . $v . "`,";
         }
         return trim(trim($sql), ",") . ";";
+    }
+
+    /**
+     * 获取表单字段信息
+     * @param string $table 表单
+     * @param string $base 数据库名
+     * @param string $columns
+     * @return string
+     */
+    public function getTabInfoSql(string $table, string $base = "", string $columns = "*"): string {
+        $sql = "SELECT {$columns} FROM INFORMATION_SCHEMA.COLUMNS";
+        if (!empty($base)) {
+            $sql .= " WHERE table_schema='" . $base . "' AND table_name='" . $this->getFullTable($table) . "'";
+        } else {
+            $sql .= " WHERE table_name='" . $this->getFullTable($table) . "'";
+        }
+        return trim($sql) . ";";
+    }
+
+    /**
+     * 获取数据库全部表单信息
+     * @param string|bool $base 数据库名称,true=全部,false=当前,string=指定
+     * @return string
+     */
+    public function getBaseSql(string|bool $base = false): string {
+        $sql = "SELECT * FROM information_schema.TABLES";
+        if ($base === false) {
+            $sql .= " WHERE table_schema='" . $this->config['database'] . "'";
+        } else if (!empty($base) && !empty(is_string($base))) {
+            $sql .= " WHERE table_schema='" . $base . "'";
+        }
+        return trim($sql) . ";";
     }
 }

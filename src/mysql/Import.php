@@ -12,6 +12,7 @@ trait Import {
      * @return array
      */
     public function import(string $FilePath): array {
+        $start = microtime(true);
         if (!empty(is_file($FilePath))) {
             try {
                 $sql = '';
@@ -67,7 +68,6 @@ trait Import {
                         }
                         $sql = '';
                     }
-
                 }
                 $data['code'] = 200;
                 $data['data'] = [
@@ -92,6 +92,9 @@ trait Import {
             $data['code'] = 400;
             $data['data'] = "file does not exist";
         }
+        $this->set = [];
+        $this->close();
+        $data['time'] = static::decimal((microtime(true) - $start), 6);//执行时间微秒
         return $data;
     }
 }

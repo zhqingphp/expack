@@ -20,6 +20,11 @@ trait Common {
     ];
 
     /**
+     * @var array 设置数据
+     */
+    public array $set = [];
+
+    /**
      * @var PDO|null PDO链接
      */
     public PDO|null $pdo;
@@ -34,6 +39,7 @@ trait Common {
      */
     public function __construct(array $config = []) {
         $this->config = [
+            'driver' => ($config['driver'] ?? 'mysql'),//类型
             'username' => ($config['username'] ?? ''), //用户名
             'password' => ($config['password'] ?? ''), //密码
             'database' => ($config['database'] ?? ''), //数据库名
@@ -50,20 +56,43 @@ trait Common {
      * @param string $database
      * @param string $host
      * @param string|int $port
+     * @param string $driver
      * @param string $prefix
      * @param string $charset
      * @return static
      */
-    public static function set(string $username = '', string $password = '', string $database = '', string $host = '127.0.0.1', string|int $port = 3306, string $prefix = '', string $charset = 'utf8mb4') {
+    public static function set(string $username = '', string $password = '', string $database = '', string $host = '127.0.0.1', string|int $port = 3306, string $driver = 'mysql', string $prefix = '', string $charset = 'utf8mb4') {
         return new self([
+            'driver' => $driver,//类型
             'username' => $username, //用户名
             'password' => $password, //密码
             'database' => $database, //数据库名
             'host' => $host, //服务器地址
             'port' => $port, //端口号
-            'charset' => $prefix,//字符集
-            'prefix' => $charset,//表前缀
+            'charset' => $charset,//字符集
+            'prefix' => $prefix,//表前缀
         ]);
+    }
+
+    /**
+     * @param string $database 选择数据库
+     * @param string $prefix 表前缀
+     * @return $this
+     */
+    public function opt(string $database, string $prefix = ''): static {
+        $this->set['database'] = $database;
+        $this->set['prefix'] = $prefix;
+        return $this;
+    }
+
+    /**
+     * 设置数据库类型
+     * @param string $driver
+     * @return $this
+     */
+    public function driver(string $driver = 'mysql'): static {
+        $this->set['driver'] = $driver;
+        return $this;
     }
 
     /**
@@ -72,7 +101,7 @@ trait Common {
      */
     public function pdo(): PDO {
         if (empty($this->pdo)) {
-            $this->pdo = new PDO("mysql:host=" . $this->config['host'] . ";port=" . $this->config['port'] . ";dbname=" . $this->config['database'] . ";charset=" . $this->config['charset'], $this->config['username'], $this->config['password']);
+            $this->pdo = new PDO($this->getDriver() . ":host=" . $this->config['host'] . ";port=" . $this->config['port'] . ";dbname=" . $this->getDataBase() . ";charset=" . $this->config['charset'], $this->config['username'], $this->config['password']);
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return $this->pdo;
@@ -84,19 +113,45 @@ trait Common {
      */
     public function mysqli(): mysqli {
         if (empty($this->mysqli)) {
-            $this->mysqli = new mysqli($this->config['host'], $this->config['username'], $this->config['password'], $this->config['database'], $this->config['port']);
+            $this->mysqli = new mysqli($this->config['host'], $this->config['username'], $this->config['password'], $this->getDataBase(), $this->config['port']);
             $this->mysqli->set_charset($this->config['charset']);
         }
         return $this->mysqli;
     }
 
     /**
-     * 获取表单全称
-     * @param string $table
+     * 获取数据库类型
      * @return string
      */
-    public function getFullTable(string $table): string {
-        return (!empty($this->config['prefix']) && empty(str_starts_with($table, $this->config['prefix']))) ? ($this->config['prefix'] . $table) : $table;
+    public function getDriver(): string {
+        return !empty($driver = ($this->set['driver'] ?? '')) ? $driver : $this->config['driver'];
+    }
+
+    /**
+     * 获取数据库名
+     * @return string
+     */
+    public function getDataBase(): string {
+        return !empty($database = ($this->set['database'] ?? '')) ? $database : $this->config['database'];
+    }
+
+    /**
+     * 获取表前缀
+     * @return string
+     */
+    public function getPrefix(): string {
+        return !empty($prefix = ($this->set['prefix'] ?? '')) ? $prefix : $this->config['prefix'];
+    }
+
+    /**
+     * 获取表单全称
+     * @param string $table
+     * @param bool $base 是否添加数据库名
+     * @return string
+     */
+    public function getFullTable(string $table, bool $base = false): string {
+        $database = !empty($base) ? ($this->getDataBase() . ".") : "";
+        return (!empty($prefix = $this->getPrefix()) && empty(str_starts_with($table, $prefix))) ? ($database . $prefix . $table) : ($database . $table);
     }
 
     /**
@@ -137,13 +192,6 @@ trait Common {
             }
         }
         return $j + 1;
-    }
-
-    /**
-     *
-     */
-    public function __destruct() {
-        $this->close();
     }
 
     /**
@@ -215,4 +263,12 @@ trait Common {
         $data = \json_decode((is_string($data) ? ($data ?: '') : ''), $type);
         return (($data && \is_object($data)) || (\is_array($data) && $data)) ? $data : [];
     }
+
+    /**
+     *
+     */
+    public function __destruct() {
+        $this->close();
+    }
+
 }

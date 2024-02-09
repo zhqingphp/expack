@@ -15,13 +15,7 @@ class PdoHelper {
      * @return array
      */
     public function getBase(string|bool $base = false, array $data = []): array {
-        $sql = "SELECT * FROM information_schema.TABLES";
-        if ($base === false) {
-            $sql .= " WHERE table_schema='" . $this->config['database'] . "';";
-        } else if (!empty($base) && !empty(is_string($base))) {
-            $sql .= " WHERE table_schema='" . $base . "';";
-        }
-        $tab = $this->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $tab = $this->query($this->getBaseSql($base))->fetchAll(PDO::FETCH_ASSOC);
         foreach ($tab as $val) {
             $data[$val['TABLE_SCHEMA']][$val['TABLE_NAME']] = $val;
         }
@@ -32,21 +26,23 @@ class PdoHelper {
      * 获取表单数据
      * @param string $table 表单名
      * @param string $columns
+     * @param bool $base 是否添加数据库名
      * @return bool|array
      */
-    public function getTabData(string $table, string $columns = "*"): bool|array {
-        return $this->query("SELECT {$columns} FROM " . $this->getFullTable($table))->fetchAll(PDO::FETCH_ASSOC);
+    public function getTabData(string $table, string $columns = "*", bool $base = false): bool|array {
+        return $this->query("SELECT {$columns} FROM " . $this->getFullTable($table, $base))->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
      * 获取表单字段信息
      * @param string $table 表单名
-     * @param string $columns
+     * @param bool $base 是否添加数据库名
      * @param array $data
      * @return array
      */
-    public function getTabInfo(string $table, string $columns = "*", array $data = []): array {
-        $tab = $this->query("SELECT {$columns} FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" . $this->getFullTable($table) . "'")
+    public function getTabInfo(string $table, bool $base = false, array $data = []): array {
+        $database = !empty($base) ? ((!empty($database = ($this->set['database'] ?? '')) ? $database : $this->config['database'])) : "";
+        $tab = $this->query($this->getTabInfoSql($this->getFullTable($table), $database))
             ->fetchAll(PDO::FETCH_ASSOC);
         foreach ($tab as $val) {
             $data[$val['COLUMN_NAME']] = $val;
@@ -57,10 +53,11 @@ class PdoHelper {
     /**
      * 获取表单sql
      * @param string $table 表单名
+     * @param bool $base 是否添加数据库名
      * @return string
      */
-    public function getTabSql(string $table): string {
-        $data = $this->query("SHOW CREATE TABLE " . $this->getFullTable($table))->fetch(PDO::FETCH_ASSOC);
+    public function getTabSql(string $table, bool $base = false): string {
+        $data = $this->query("SHOW CREATE TABLE " . $this->getFullTable($table, $base))->fetch(PDO::FETCH_ASSOC);
         return $data['Create Table'] ?? '';
     }
 
@@ -70,6 +67,15 @@ class PdoHelper {
      */
     public function getAllTabName(): bool|array {
         return $this->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    /**
+     * 获取 MySQL 版本号
+     * @return string
+     */
+    public function version(): string {
+        $data = $this->query("SELECT VERSION() as version")->fetch(PDO::FETCH_ASSOC);
+        return $data['version'] ?? '';
     }
 
     /**

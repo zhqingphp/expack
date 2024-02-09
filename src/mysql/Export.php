@@ -5,7 +5,9 @@ namespace zhqing\mysql;
 use Exception;
 
 trait Export {
-    //mysql字段类型分类
+    /**
+     * @var array mysql字段类型分类
+     */
     public array $MysqlType = [
         //数值类型
         'int' => [
@@ -74,15 +76,19 @@ trait Export {
      * @return array
      */
     public function export(string $FilePath = '', bool $isData = true, array $isTable = []): array {
+        $start = microtime(true);
         try {
-            $content = $this->remark("Date: " . date("Y-m-d H:i:s")) . "\r\n";
+            $database = $this->getDataBase();
+            $driver = ucfirst(strtolower($this->getDriver()));
+            $content = $this->remark("PHP: " . PHP_VERSION . "\r\n-- Host: " . $this->config['host'] . ":" . $this->config['port'] . "\r\n-- Driver: " . $driver . "\r\n-- " . $driver . ": " . $this->version() . "\r\n-- Name: " . $database . "\r\n-- Date: " . date("Y-m-d H:i:s") . "\r\n-- Execution: [{:ExecutionTime}]") . "\r\n";
             $content .= "SET NAMES " . $this->config['charset'] . ";\r\n";
             $content .= "SET FOREIGN_KEY_CHECKS = 0;\r\n";
-            $ss = 2;
+            $ss = 3;
             $ds = 0;
             $cs = 0;
             $is = 0;
-            $tabNameArray = $this->getAllTabName();//获取所有表名
+            $base = $this->getBase($database);//获取所有表名
+            $tabNameArray = array_keys($base[key($base)]);
             if (!empty($tabNameArray)) {
                 if (!empty($isTable)) {
                     foreach ($isTable as $k => $v) {
@@ -91,21 +97,20 @@ trait Export {
                 }
                 foreach ($tabNameArray as $table) {
                     //如果设置了表前缀,且传入的表名不包含表前缀,则补上
-                    $table = $this->getFullTable($table);
+                    $tables = $this->getFullTable($table);
                     //要导出的表名数组
-                    if (!empty($isTable) && !in_array($table, $isTable)) {
+                    if (!empty($isTable) && !in_array($tables, $isTable)) {
                         continue;
                     }
                     $content .= "\r\n";
-                    $content .= $this->remark("Table structure for " . $table);
+                    $content .= $this->remark("Table structure for " . $tables);
                     $tabSql = $this->getTabSql($table);//获取表单sql
-                    $content .= "DROP TABLE IF EXISTS `{$table}`;\r\n";
+                    $content .= "DROP TABLE IF EXISTS `{$tables}`;\r\n";
                     ++$ds;
                     $content .= $tabSql . ";\r\n\r\n";
                     ++$cs;
                     if (!empty($isData)) {
                         $from = "*";
-                        $content .= $this->remark("Records of " . $table);
                         $tabArr = $this->getTabInfo($table);//获取表单字段信息
                         foreach ($tabArr as $k => $v) {
                             if (in_array(strtolower(($v['DATA_TYPE'] ?? '')), $this->MysqlType['room'])) {
@@ -114,6 +119,9 @@ trait Export {
                         }
                         $tabData = $this->getTabData($table, trim($from, ",")); //导出表的结构
                         if (!empty($tabData)) {
+                            $content .= $this->remark("Records of " . $tables);
+                            ++$ss;
+                            $content .= "BEGIN;\r\n";
                             foreach ($tabData as $row) {
                                 $field = "";
                                 $values = "";
@@ -143,15 +151,19 @@ trait Export {
                                 }
                                 $field = trim($field, ", ");
                                 $values = trim($values, ", ");
-                                $content .= "INSERT INTO `{$table}` ({$field}) VALUES ({$values});\r\n";
+                                $content .= "INSERT INTO `{$tables}` ({$field}) VALUES ({$values});\r\n";
                                 ++$is;
                             }
+                            ++$ss;
+                            $content .= "COMMIT;\r\n";
                         }
                     }
                 }
             }
-            $content .= "\r\nSET FOREIGN_KEY_CHECKS = 1;";
-            ++$ss;
+            $content .= "\r\nSET FOREIGN_KEY_CHECKS = 1;\r\n\r\n";
+            $executionTime = static::decimal((microtime(true) - $start), 6);//执行时间微秒
+            $content = str_replace("[{:ExecutionTime}]", $executionTime . " Microseconds", $content);
+            $content .= $this->remark("End: " . date("Y-m-d H:i:s"));
             $data['code'] = 200;
             if (!empty($FilePath)) {
                 $data['data'] = (@file_put_contents($this->mkDir($FilePath), $content));
@@ -168,8 +180,11 @@ trait Export {
         } catch (Exception $e) {
             $data['code'] = 400;
             $data['data'] = $e->getMessage();
+            $executionTime = static::decimal((microtime(true) - $start), 6);//执行时间微秒
         }
+        $this->set = [];
         $this->close();
+        $data['time'] = $executionTime;//执行时间微秒
         return $data;
     }
 }

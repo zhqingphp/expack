@@ -14,13 +14,7 @@ class MysqliHelper {
      * @return array
      */
     public function getBase(string|bool $base = false, array $data = []): array {
-        $sql = "SELECT * FROM information_schema.TABLES";
-        if ($base === false) {
-            $sql .= " WHERE table_schema='" . $this->config['database'] . "';";
-        } else if (!empty($base) && !empty(is_string($base))) {
-            $sql .= " WHERE table_schema='" . $base . "';";
-        }
-        $result = $this->query($sql);
+        $result = $this->query($this->getBaseSql($base));
         while ($val = $result->fetch_assoc()) {
             $data[$val['TABLE_SCHEMA']][$val['TABLE_NAME']] = $val;
         }
@@ -31,11 +25,12 @@ class MysqliHelper {
      * 获取表单数据
      * @param string $table 表单名
      * @param string $columns
+     * @param bool $base 是否添加数据库名
      * @param array $data
      * @return bool|array
      */
-    public function getTabData(string $table, string $columns = "*", array $data = []): bool|array {
-        $result = $this->query("SELECT {$columns} FROM " . $this->getFullTable($table));
+    public function getTabData(string $table, string $columns = "*", bool $base = false, array $data = []): bool|array {
+        $result = $this->query("SELECT {$columns} FROM " . $this->getFullTable($table, $base));
         while ($val = $result->fetch_assoc()) {
             $data[] = $val;
         }
@@ -45,12 +40,13 @@ class MysqliHelper {
     /**
      * 获取表单字段信息
      * @param string $table 表单名
-     * @param string $columns
+     * @param bool $base 是否添加数据库名
      * @param array $data
      * @return array
      */
-    public function getTabInfo(string $table, string $columns = "*", array $data = []): array {
-        $result = $this->query("SELECT {$columns} FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" . $this->getFullTable($table) . "'");
+    public function getTabInfo(string $table, bool $base = false, array $data = []): array {
+        $database = !empty($base) ? ((!empty($database = ($this->set['database'] ?? '')) ? $database : $this->config['database'])) : "";
+        $result = $this->query($this->getTabInfoSql($this->getFullTable($table), $database));
         while ($val = $result->fetch_assoc()) {
             $data[$val['COLUMN_NAME']] = $val;
         }
@@ -60,10 +56,11 @@ class MysqliHelper {
     /**
      * 获取表单sql
      * @param string $table 表单名
+     * @param bool $base 是否添加数据库名
      * @return string
      */
-    public function getTabSql(string $table): string {
-        $data = $this->query("SHOW CREATE TABLE " . $this->getFullTable($table))->fetch_assoc();
+    public function getTabSql(string $table, bool $base = false): string {
+        $data = $this->query("SHOW CREATE TABLE " . $this->getFullTable($table, $base))->fetch_assoc();
         return $data['Create Table'] ?? '';
     }
 
@@ -90,6 +87,14 @@ class MysqliHelper {
     }
 
     /**
+     * 获取 MySQL 版本号
+     * @return string
+     */
+    public function version(): string {
+        return $this->mysqli()->get_server_info();
+    }
+
+    /**
      * 执行sql
      * @param string $sql
      * @return mysqli_result|bool
@@ -99,12 +104,11 @@ class MysqliHelper {
     }
 
     /**
-     * 转义字符串
+     * 转义字符串 addslashes
      * @param $string
      * @return string
      */
     public function quote($string): string {
-        //addslashes
         return "'" . $this->mysqli()->escape_string($string) . "'";
     }
 
@@ -114,7 +118,6 @@ class MysqliHelper {
      * @return string
      */
     public function strips($string): string {
-        //stripslashes
         return stripslashes($string);
     }
 
