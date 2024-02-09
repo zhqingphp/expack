@@ -5,6 +5,67 @@ namespace zhqing\mysql;
 use Exception;
 
 trait Export {
+    //mysql字段类型分类
+    public array $MysqlType = [
+        //数值类型
+        'int' => [
+            'tinyint',
+            'smallint',
+            'mediumint',
+            'int',
+            'bigint',
+            'float',
+            'double',
+            'decimal'
+        ],
+        //二进制类型
+        'hex' => [
+            'tinyblob',
+            'blob',
+            'mediumblob',
+            'longblob',
+            'binary',
+            'varbinary'
+        ],
+        //空间类型
+        'room' => [
+            'geometry',
+            'point',
+            'linestring',
+            'polygon',
+            'multipoint',
+            'multilinestring',
+            'multipolygon',
+            'geometrycollection'
+        ],
+        //JSON类型
+        'json' => [
+            'json'
+        ],
+        //字符串类型
+        'string' => [
+            'char',
+            'varchar',
+            'tinytext',
+            'text',
+            'mediumtext',
+            'longtext'
+        ],
+        //枚举与集合类型
+        'enum' => [
+            'enum',
+            'set'
+        ],
+        //日期与时间类型
+        'time' => [
+            'time',
+            'date',
+            'datetime',
+            'timestamp',
+            'year'
+        ]
+    ];
+
     /**
      * 导出sql文件
      * @param string $FilePath 导出的.sql文件路径,(为空不保存,可通过sql()获取生成的sql)
@@ -43,21 +104,35 @@ trait Export {
                     $content .= $tabSql . ";\r\n\r\n";
                     ++$cs;
                     if (!empty($isData)) {
+                        $from = "*";
                         $content .= $this->remark("Records of " . $table);
-                        $tabData = $this->getTabData($table); //导出表的结构
+                        $tabArr = $this->getTabInfo($table);//获取表单字段信息
+                        foreach ($tabArr as $k => $v) {
+                            if (in_array(strtolower(($v['DATA_TYPE'] ?? '')), $this->MysqlType['room'])) {
+                                $from .= ",ST_AsText(" . $k . ") as " . $k;
+                            }
+                        }
+                        $tabData = $this->getTabData($table, trim($from, ",")); //导出表的结构
                         if (!empty($tabData)) {
-                            $tabArr = $this->getTabInfo($table);//获取表单字段信息
                             foreach ($tabData as $row) {
                                 $field = "";
                                 $values = "";
                                 foreach ($row as $key => $value) {
                                     $value = !empty($value) ? $value : ($tabArr[$key]['COLUMN_DEFAULT'] ?? NULL);
-                                    if (is_numeric($value)) {
-                                        $values .= $value . ", "; //判断字段值是否为数字
+                                    $dataType = strtolower($tabArr[$key]['DATA_TYPE'] ?? '');//类型
+                                    if (in_array($dataType, $this->MysqlType['int'])) {
+                                        $values .= (!empty($value) ? $value : 0) . ", ";
                                     } else if ($value == null) {
                                         $values .= "NULL, ";
+                                    } else if (empty($value)) {
+                                        $values .= "'', ";
+                                    } else if (in_array($dataType, $this->MysqlType['hex'])) {
+                                        $value = "0x" . bin2hex($value);
+                                        $values .= $value . ", ";
+                                    } else if (in_array($dataType, $this->MysqlType['room'])) {
+                                        $values .= "ST_GeomFromText(\"" . $value . "\"), ";
                                     } else {
-                                        if (!empty($jsonArr = static::isJson($value))) {
+                                        if (!empty($jsonArr = static::isJson($value)) || in_array($dataType, $this->MysqlType['json'])) {
                                             $formattedJson = json_encode($jsonArr, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                                             $formattedJson = preg_replace('/^\s+|\s+$/m', '', $formattedJson);
                                             $value = preg_replace('/\s+/', '', $formattedJson);

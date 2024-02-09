@@ -14,8 +14,8 @@ trait Import {
     public function import(string $FilePath): array {
         if (!empty(is_file($FilePath))) {
             try {
+                $sql = '';
                 $body = @file_get_contents($FilePath);
-                $array = explode("\r\n\r\n", $body);
                 $ds = 0;
                 $de = 0;
                 $cs = 0;
@@ -25,49 +25,49 @@ trait Import {
                 $ss = 0;
                 $se = 0;
                 $fail = [];
-                for ($i = 1; $i < count($array); ++$i) {
-                    $sql = '';
-                    $arr = explode("\r\n", $array[$i]);
-                    foreach ($arr as $v) {
-                        if (trim($v) == '' || stripos(trim($v), '--') === 0 || stripos(trim($v), '/*') === 0) {
-                            continue;
-                        }
-                        $sql .= " " . $v;
-                        if (str_ends_with(trim($v), ';')) {
-                            $exec = trim($sql) . ';';
-                            $res = $this->exec($this->strips($exec));
-                            if (str_starts_with($exec, 'DROP')) {
-                                if ($res !== false) {
-                                    ++$ds;
-                                } else {
-                                    ++$de;
-                                    $fail[] = $exec;
-                                }
-                            } else if (str_starts_with($exec, 'CREATE')) {
-                                if ($res !== false) {
-                                    ++$cs;
-                                } else {
-                                    ++$ce;
-                                    $fail[] = $exec;
-                                }
-                            } else if (str_starts_with($exec, 'INSERT')) {
-                                if ($res !== false) {
-                                    ++$is;
-                                } else {
-                                    ++$ie;
-                                    $fail[] = $exec;
-                                }
-                            } else {
-                                if ($res !== false) {
-                                    ++$ss;
-                                } else {
-                                    ++$se;
-                                    $fail[] = $exec;
-                                }
-                            }
-                            $sql = '';
-                        }
+                $body = preg_replace('/\/\*(?![^\/]*\*\/)(.*?)(?=\*\/)/s', '', $body);
+                $body = str_replace("\r\n", PHP_EOL, $body);
+                $array = explode(PHP_EOL, $body);
+                foreach ($array as $v) {
+                    if (empty($v) || str_starts_with($v, '--') || str_starts_with($v, '/*') || str_starts_with($v, '*/')) {
+                        continue;
                     }
+                    $sql .= " " . $v;
+                    if (str_ends_with($v, ';')) {
+                        $exec = trim($sql);
+                        $res = $this->exec($this->strips($exec));
+                        if (str_starts_with($exec, 'DROP')) {
+                            if ($res !== false) {
+                                ++$ds;
+                            } else {
+                                ++$de;
+                                $fail[] = $exec;
+                            }
+                        } else if (str_starts_with($exec, 'CREATE')) {
+                            if ($res !== false) {
+                                ++$cs;
+                            } else {
+                                ++$ce;
+                                $fail[] = $exec;
+                            }
+                        } else if (str_starts_with($exec, 'INSERT')) {
+                            if ($res !== false) {
+                                ++$is;
+                            } else {
+                                ++$ie;
+                                $fail[] = $exec;
+                            }
+                        } else {
+                            if ($res !== false) {
+                                ++$ss;
+                            } else {
+                                ++$se;
+                                $fail[] = $exec;
+                            }
+                        }
+                        $sql = '';
+                    }
+
                 }
                 $data['code'] = 200;
                 $data['data'] = [
@@ -94,5 +94,4 @@ trait Import {
         }
         return $data;
     }
-
 }

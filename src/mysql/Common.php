@@ -39,7 +39,7 @@ trait Common {
             'database' => ($config['database'] ?? ''), //数据库名
             'host' => ($config['host'] ?? ($config['hostname'] ?? '127.0.0.1')), //服务器地址
             'port' => ($config['port'] ?? ($config['hostport'] ?? 3306)), //端口号
-            'charset' => ($config['charset'] ?? ''),//字符集
+            'charset' => ($config['charset'] ?? 'utf8mb4'),//字符集
             'prefix' => ($config['prefix'] ?? ''),//表前缀
         ];
     }

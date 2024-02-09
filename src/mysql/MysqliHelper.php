@@ -30,11 +30,12 @@ class MysqliHelper {
     /**
      * 获取表单数据
      * @param string $table 表单名
+     * @param string $columns
      * @param array $data
      * @return bool|array
      */
-    public function getTabData(string $table, array $data = []): bool|array {
-        $result = $this->query("SELECT * FROM " . $this->getFullTable($table));
+    public function getTabData(string $table, string $columns = "*", array $data = []): bool|array {
+        $result = $this->query("SELECT {$columns} FROM " . $this->getFullTable($table));
         while ($val = $result->fetch_assoc()) {
             $data[] = $val;
         }
@@ -44,11 +45,12 @@ class MysqliHelper {
     /**
      * 获取表单字段信息
      * @param string $table 表单名
+     * @param string $columns
      * @param array $data
      * @return array
      */
-    public function getTabInfo(string $table, array $data = []): array {
-        $result = $this->query("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" . $this->getFullTable($table) . "'");
+    public function getTabInfo(string $table, string $columns = "*", array $data = []): array {
+        $result = $this->query("SELECT {$columns} FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" . $this->getFullTable($table) . "'");
         while ($val = $result->fetch_assoc()) {
             $data[$val['COLUMN_NAME']] = $val;
         }

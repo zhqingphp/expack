@@ -31,20 +31,22 @@ class PdoHelper {
     /**
      * 获取表单数据
      * @param string $table 表单名
+     * @param string $columns
      * @return bool|array
      */
-    public function getTabData(string $table): bool|array {
-        return $this->query("SELECT * FROM " . $this->getFullTable($table))->fetchAll(PDO::FETCH_ASSOC);
+    public function getTabData(string $table, string $columns = "*"): bool|array {
+        return $this->query("SELECT {$columns} FROM " . $this->getFullTable($table))->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
      * 获取表单字段信息
      * @param string $table 表单名
+     * @param string $columns
      * @param array $data
      * @return array
      */
-    public function getTabInfo(string $table, array $data = []): array {
-        $tab = $this->query("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" . $this->getFullTable($table) . "'")
+    public function getTabInfo(string $table, string $columns = "*", array $data = []): array {
+        $tab = $this->query("SELECT {$columns} FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" . $this->getFullTable($table) . "'")
             ->fetchAll(PDO::FETCH_ASSOC);
         foreach ($tab as $val) {
             $data[$val['COLUMN_NAME']] = $val;

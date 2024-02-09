@@ -50,16 +50,20 @@ trait Sql {
             'list' => [
                 'title' => [
                     'type' => 'varchar(200)', //字段类型
+                    'charset' => 'utf8mb4', //字符集
                     'key' => false, //是否键
                     'null' => false, //不是null
                     'default' => 0, //字段默认值
+                    'time' => false, //根据当前时间戳更新
                     'comment' => 'demo field'//字段备注
                 ],
                 'content' => [
                     'type' => 'blob', //字段类型
+                    'charset' => 'utf8mb4', //字符集
                     'key' => false, //是否键
                     'null' => false, //不是null
                     'default' => "NULL", //字段默认值
+                    'time' => false, //根据当前时间戳更新
                     'comment' => 'demo field'//字段备注
                 ]
             ]
@@ -77,8 +81,10 @@ trait Sql {
             }
             $sql .= "  `" . $k . "`";
             $sql .= (!empty($type = ($v['type'] ?? '')) ? (" " . $type) : "");//int(11)
+            $sql .= (!empty($charset = ($v['charset'] ?? ($this->config['charset'] ?? ''))) ? (" CHARACTER SET " . $charset) : " CHARACTER SET utf8mb4");//字符集
             $sql .= (!empty($null) ? (" NOT NULL") : "");//是否能为空
             $sql .= (!empty($default = ($v['default'] ?? '')) ? (" DEFAULT " . $default) : "");//默认值
+            $sql .= !empty(($v['time'] ?? '')) ? " ON UPDATE CURRENT_TIMESTAMP" : "";//根据当前时间戳更新
             $sql .= (!empty($comment = ($v['comment'] ?? '')) ? (" COMMENT '" . $comment . "'") : "");//备注
             $sql .= ",\r\n";
         }
@@ -115,17 +121,22 @@ trait Sql {
         $demo = [
             'field' => [
                 'type' => 'int(11)', //字段类型
+                'charset' => 'utf8mb4', //字符集
                 'null' => false, //不是null
                 'default' => 0, //字段默认值
+                'time' => false, //根据当前时间戳更新
                 'comment' => 'demo field'//字段备注
             ]
         ];
         $sql = "ALTER TABLE `" . $this->getFullTable($table) . "`";
         foreach ($array as $k => $v) {
             $sql .= " ADD `" . $k . "`";
+            //
             $sql .= (!empty($type = ($v['type'] ?? '')) ? (" " . $type) : "");//int(11)
+            $sql .= (!empty($charset = ($v['charset'] ?? '')) ? (" CHARACTER SET " . $charset) : " CHARACTER SET utf8mb4");//字符集
             $sql .= (!empty(($v['null'] ?? '')) ? (" NOT NULL") : "");//是否能为空
             $sql .= (!empty($default = ($v['default'] ?? '')) ? (" DEFAULT " . $default) : "");//默认值
+            $sql .= !empty(($v['time'] ?? '')) ? " ON UPDATE CURRENT_TIMESTAMP" : "";//根据当前时间戳更新
             $sql .= (!empty($comment = ($v['comment'] ?? '')) ? (" COMMENT '" . $comment . "'") : "");//备注
             $sql .= ",";
         }
