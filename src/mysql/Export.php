@@ -4,6 +4,9 @@ namespace zhqing\mysql;
 
 use Exception;
 
+/**
+ * 导出sql文件
+ */
 trait Export {
     /**
      * @var array mysql字段类型分类

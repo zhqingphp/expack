@@ -4,10 +4,13 @@ namespace zhqing\mysql;
 
 use Exception;
 
+/**
+ * 导入sql文件
+ */
 trait Import {
 
     /**
-     * sql文件导入数据库
+     * 导入sql文件
      * @param string $FilePath sql文件路径
      * @return array
      */
