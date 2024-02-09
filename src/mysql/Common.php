@@ -176,25 +176,6 @@ trait Common {
     }
 
     /**
-     * 判断几维数组
-     * @param $arr
-     * @param int $j
-     * @return int
-     */
-    public static function arrLevel($arr, int $j = 0): int {
-        if (empty(\is_array($arr))) {
-            return $j;
-        }
-        foreach ($arr as $K) {
-            $v = self::arrLevel($K);
-            if ($v > $j) {
-                $j = $v;
-            }
-        }
-        return $j + 1;
-    }
-
-    /**
      * 通过a.b.c.d获取数组内容
      * @param array $data //要取值的数组
      * @param string $name //支持aa.bb.cc.dd这样获取数组内容
