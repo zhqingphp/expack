@@ -7,8 +7,44 @@ use zhqing\extend\IpAdder;
 use support\view\ThinkPHP;
 use support\Response;
 use Phar;
+use Webman\Route;
+use support\Request;
+use zhqing\extend\Curl;
+use develop\PceLogin;
+use zhqing\mysql\PdoHelper;
+use Workerman\Protocols\Http\Chunk;
 
 class Way {
+
+    /**
+     * 发送http chunk数据
+     * https://www.workerman.net/doc/workerman/http/response.html
+     * @param callable $callable
+     * @param string $top
+     * @param string $end
+     * @return \support\Response
+     */
+    public static function obFlush(callable $callable, string $top = "", string $end = ""): \support\Response {
+        $connection = \request()->connection;
+        $connection->send((new \support\Response(200, ['Transfer-Encoding' => 'chunked'], $top)));
+        $callable(function ($data) use ($connection) {
+            return $connection->send(new \Workerman\Protocols\Http\Chunk($data));
+        });
+        $connection->send(new \Workerman\Protocols\Http\Chunk($end));
+        $connection->send(new \Workerman\Protocols\Http\Chunk(''));
+        return \response($end)->withHeaders([
+            "Content-Type" => "application/octet-stream",
+            "Transfer-Encoding" => "chunked"
+        ]);
+        /**
+         * return self::obFlush(function (callable $callable) {
+         * for ($i = 1; $i <= 30; $i++) {
+         * $callable('第' . $i . '段数据');
+         * sleep(1);
+         * }
+         * }, 'top', 'end');
+         */
+    }
 
     /**
      * 还原phar文件
