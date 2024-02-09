@@ -75,15 +75,23 @@ trait Export {
      * 导出sql文件
      * @param string $FilePath 导出的.sql文件路径,(为空不保存,可通过sql()获取生成的sql)
      * @param bool $isData 是否导出表数据(默认为true)
-     * @param array $isTable 要导出的表名数组(默认为空，即导出所有表)
+     * @param array $optTable 要(导出|排除)的表名数组(默认为空，即导出所有表)
+     * @param bool $optType true=导出,false=排除
      * @return array
      */
-    public function export(string $FilePath = '', bool $isData = true, array $isTable = []): array {
+    public function export(string $FilePath = '', bool $isData = true, array $optTable = [], bool $optType = false): array {
         $start = microtime(true);
         try {
             $database = $this->getDataBase();
             $driver = ucfirst(strtolower($this->getDriver()));
-            $content = $this->remark("PHP: " . PHP_VERSION . "\r\n-- Host: " . $this->config['host'] . ":" . $this->config['port'] . "\r\n-- Driver: " . $driver . "\r\n-- " . $driver . ": " . $this->version() . "\r\n-- Name: " . $database . "\r\n-- Date: " . date("Y-m-d H:i:s") . "\r\n-- Execution: [{:ExecutionTime}]") . "\r\n";
+            $remark = "Top: " . date("Y-m-d H:i:s") . "\r\n";
+            $remark .= "-- PHP: " . PHP_VERSION . "\r\n";
+            $remark .= "-- Host: " . $this->config['host'] . ":" . $this->config['port'] . "\r\n";
+            $remark .= "-- Driver: " . $driver . "\r\n";
+            $remark .= "-- " . $driver . ": " . $this->version() . "\r\n";
+            $remark .= "-- Name: " . $database . "\r\n";
+            $remark .= "-- Execution: [{:ExecutionTime}]";
+            $content = $this->remark($remark) . "\r\n";
             $content .= "SET NAMES " . $this->config['charset'] . ";\r\n";
             $content .= "SET FOREIGN_KEY_CHECKS = 0;\r\n";
             $ss = 3;
@@ -93,16 +101,21 @@ trait Export {
             $base = $this->getBase($database);//获取所有表名
             $tabNameArray = array_keys($base[key($base)]);
             if (!empty($tabNameArray)) {
-                if (!empty($isTable)) {
-                    foreach ($isTable as $k => $v) {
-                        $isTable[$k] = $this->getFullTable($v);
+                if (!empty($optTable)) {
+                    foreach ($optTable as $k => $v) {
+                        $optTable[$k] = $this->getFullTable($v);
                     }
                 }
                 foreach ($tabNameArray as $table) {
                     //如果设置了表前缀,且传入的表名不包含表前缀,则补上
                     $tables = $this->getFullTable($table);
                     //要导出的表名数组
-                    if (!empty($isTable) && !in_array($tables, $isTable)) {
+                    if (!empty($optTable) &&
+                        (
+                            (!empty($optType) && empty(in_array($tables, $optTable))) ||
+                            (empty($optType) && !empty(in_array($tables, $optTable)))
+                        )
+                    ) {
                         continue;
                     }
                     $content .= "\r\n";
@@ -164,12 +177,13 @@ trait Export {
                 }
             }
             $content .= "\r\nSET FOREIGN_KEY_CHECKS = 1;\r\n\r\n";
-            $executionTime = static::decimal((microtime(true) - $start), 6);//执行时间微秒
-            $content = str_replace("[{:ExecutionTime}]", $executionTime . " Microseconds", $content);
+            $executionTime = static::decimal((microtime(true) - $start));//执行时间秒
+            $content = str_replace("[{:ExecutionTime}]", $executionTime, $content);
             $content .= $this->remark("End: " . date("Y-m-d H:i:s"));
             $data['code'] = 200;
             if (!empty($FilePath)) {
-                $data['data'] = (@file_put_contents($this->mkDir($FilePath), $content));
+                $bytes = (@file_put_contents($this->mkDir($FilePath), $content));
+                $data['data'] = $bytes > 0 ? (static::decimal($bytes / 1024) . 'KB') : $bytes;
             } else {
                 $data['data'] = $content;
             }
@@ -183,11 +197,11 @@ trait Export {
         } catch (Exception $e) {
             $data['code'] = 400;
             $data['data'] = $e->getMessage();
-            $executionTime = static::decimal((microtime(true) - $start), 6);//执行时间微秒
+            $executionTime = static::decimal((microtime(true) - $start));//执行时间秒
         }
         $this->set = [];
         $this->close();
-        $data['time'] = $executionTime;//执行时间微秒
+        $data['time'] = $executionTime;//执行时间秒
         return $data;
     }
 }

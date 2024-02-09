@@ -30,6 +30,17 @@ trait Sql {
     }
 
     /**
+     * 重设AUTO_INCREMENT=1
+     * @param array|string $table
+     * @param bool $base 是否添加数据库名
+     * @param int $auto
+     * @return string
+     */
+    public function auto(array|string $table, bool $base = false, int $auto = 1): string {
+        return "ALTER TABLE " . $this->getFullTable($table, $base) . " AUTO_INCREMENT = " . $auto . ";";
+    }
+
+    /**
      * 添加表单
      * @param string $table 表单名
      * @param array $array
@@ -106,7 +117,11 @@ trait Sql {
     public function edits(string $table, array $array, bool $base = false): string {
         $sql = "ALTER TABLE `" . $this->getFullTable($table, $base) . "`";
         foreach ($array as $k => $v) {
-            $sql .= $this->edit('', [$k => ($v['name'] ?? '')], ['type' => ($v['type'] ?? ''), 'default' => ($v['default'] ?? ''), 'comment' => ($v['comment'] ?? '')]) . ",";
+            $sql .= ($this->edit('', [$k => ($v['name'] ?? '')], [
+                    'type' => ($v['type'] ?? ''),
+                    'default' => ($v['default'] ?? ''),
+                    'comment' => ($v['comment'] ?? '')
+                ])) . ",";
         }
         return trim(trim($sql, ","));
     }

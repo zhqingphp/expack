@@ -12,9 +12,12 @@ trait Import {
     /**
      * 导入sql文件
      * @param string $FilePath sql文件路径
+     * @param string|bool $charset 字符集,string=自定(空不作修改),true=默认数据库配置,false=删除
+     * @param string|bool $collate 排序规则,string=自定(空不作修改),true=默认数据库配置,false=删除
+     * @param string|bool $engine 引擎,string=自定(空不作修改),true=默认数据库配置
      * @return array
      */
-    public function import(string $FilePath): array {
+    public function import(string $FilePath, string|bool $charset = true, string|bool $collate = true, string|bool $engine = ''): array {
         $start = microtime(true);
         if (!empty(is_file($FilePath))) {
             try {
@@ -33,36 +36,74 @@ trait Import {
                 $body = str_replace("\r\n", PHP_EOL, $body);
                 $array = explode(PHP_EOL, $body);
                 foreach ($array as $v) {
-                    if (empty($v) || str_starts_with($v, '--') || str_starts_with($v, '/*') || str_starts_with($v, '*/')) {
+                    if (
+                        empty($v) ||
+                        str_starts_with($v, '--') ||
+                        str_starts_with($v, '/*') ||
+                        str_starts_with($v, '*/')
+                    ) {
                         continue;
                     }
                     $sql .= " " . $v;
                     if (str_ends_with($v, ';')) {
                         $exec = trim($sql);
-                        $res = $this->exec($this->strips($exec));
+                        $sql = $this->strips($exec);
                         if (str_starts_with($exec, 'DROP')) {
-                            if ($res !== false) {
+                            if ($this->exec($sql) !== false) {
                                 ++$ds;
                             } else {
                                 ++$de;
                                 $fail[] = $exec;
                             }
                         } else if (str_starts_with($exec, 'CREATE')) {
-                            if ($res !== false) {
+                            //修改字符集,排序规则,引擎
+                            $sql = preg_replace_callback("/(ENGINE=|CHARSET=|COLLATE=)([^ ]+)/", function ($arr) use ($charset, $collate, $engine) {
+                                $key = $arr[1] ?? '';
+                                $k = strtolower($key);
+                                if (str_starts_with($k, strtolower('CHARSET'))) {
+                                    if (!empty($charset)) {
+                                        if ($charset === true) {
+                                            return $key . $this->config['charset'];
+                                        }
+                                        return $key . $charset;
+                                    } elseif ($charset !== false) {
+                                        return $key . ($arr[2] ?? '');
+                                    }
+                                } else if (str_starts_with($k, strtolower('COLLATE'))) {
+                                    if (!empty($collate)) {
+                                        if ($collate === true) {
+                                            return $key . $this->config['collation'];
+                                        }
+                                        return $key . $collate;
+                                    } elseif ($collate !== false) {
+                                        return $key . ($arr[2] ?? '');
+                                    }
+                                } else if (str_starts_with($k, strtolower('ENGINE'))) {
+                                    if (!empty($engine)) {
+                                        if ($engine === true) {
+                                            return $key . $this->config['engine'];
+                                        }
+                                        return $key . $engine;
+                                    }
+                                    return $key . ($arr[2] ?? '');
+                                }
+                                return '';
+                            }, $sql);
+                            if ($this->exec($sql) !== false) {
                                 ++$cs;
                             } else {
                                 ++$ce;
                                 $fail[] = $exec;
                             }
                         } else if (str_starts_with($exec, 'INSERT')) {
-                            if ($res !== false) {
+                            if ($this->exec($sql) !== false) {
                                 ++$is;
                             } else {
                                 ++$ie;
                                 $fail[] = $exec;
                             }
                         } else {
-                            if ($res !== false) {
+                            if ($this->exec($sql) !== false) {
                                 ++$ss;
                             } else {
                                 ++$se;
@@ -97,7 +138,7 @@ trait Import {
         }
         $this->set = [];
         $this->close();
-        $data['time'] = static::decimal((microtime(true) - $start), 6);//执行时间微秒
+        $data['time'] = static::decimal((microtime(true) - $start));//执行时间秒
         return $data;
     }
 }

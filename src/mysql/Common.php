@@ -10,13 +10,17 @@ trait Common {
      * @var array 数据库配置
      */
     public array $config = [
+        'driver' => 'mysql',//类型
+        'host' => 'localhost', //服务器地址
+        'port' => 3306, //端口号
         'username' => '', //用户名
         'password' => '', //密码
         'database' => '', //数据库名
-        'host' => '', //服务器地址
-        'port' => '', //端口号
-        'charset' => '',//字符集
         'prefix' => '',//表前缀
+        'charset' => 'utf8mb4',//字符集
+        'collation' => 'utf8mb4_general_ci',//排序规则
+        'unix_socket' => null,//Unix 域套
+        'engine' => 'InnoDB',//引擎
     ];
 
     /**
@@ -40,42 +44,22 @@ trait Common {
     public function __construct(array $config = []) {
         $this->config = [
             'driver' => ($config['driver'] ?? 'mysql'),//类型
+            'host' => ($config['host'] ?? ($config['hostname'] ?? 'localhost')), //服务器地址
+            'port' => ($config['port'] ?? ($config['hostport'] ?? 3306)), //端口号
             'username' => ($config['username'] ?? ''), //用户名
             'password' => ($config['password'] ?? ''), //密码
             'database' => ($config['database'] ?? ''), //数据库名
-            'host' => ($config['host'] ?? ($config['hostname'] ?? '127.0.0.1')), //服务器地址
-            'port' => ($config['port'] ?? ($config['hostport'] ?? 3306)), //端口号
-            'charset' => ($config['charset'] ?? 'utf8mb4'),//字符集
             'prefix' => ($config['prefix'] ?? ''),//表前缀
+            'charset' => ($config['charset'] ?? 'utf8mb4'),//字符集
+            'collation' => ($config['collation'] ?? 'utf8mb4_general_ci'),//排序规则
+            'unix_socket' => ($config['unix_socket'] ?? ($config['socket'] ?? null)),//Unix 域套
+            'engine' => ($config['engine'] ?? 'InnoDB'),//引擎
         ];
     }
 
     /**
-     * @param string $username
-     * @param string $password
-     * @param string $database
-     * @param string $host
-     * @param string|int $port
-     * @param string $driver
-     * @param string $prefix
-     * @param string $charset
-     * @return static
-     */
-    public static function set(string $username = '', string $password = '', string $database = '', string $host = '127.0.0.1', string|int $port = 3306, string $driver = 'mysql', string $prefix = '', string $charset = 'utf8mb4') {
-        return new self([
-            'driver' => $driver,//类型
-            'username' => $username, //用户名
-            'password' => $password, //密码
-            'database' => $database, //数据库名
-            'host' => $host, //服务器地址
-            'port' => $port, //端口号
-            'charset' => $charset,//字符集
-            'prefix' => $prefix,//表前缀
-        ]);
-    }
-
-    /**
-     * @param string $database 选择数据库
+     * 选择数据库链接
+     * @param string $database 数据库名
      * @param string $prefix 表前缀
      * @return $this
      */
@@ -101,7 +85,20 @@ trait Common {
      */
     public function pdo(): PDO {
         if (empty($this->pdo)) {
-            $this->pdo = new PDO($this->getDriver() . ":host=" . $this->config['host'] . ";port=" . $this->config['port'] . ";dbname=" . $this->getDataBase() . ";charset=" . $this->config['charset'], $this->config['username'], $this->config['password']);
+            $dsn = $this->getDriver() . ":";
+            if (!empty($socket = $this->config['unix_socket'] ?? '')) {
+                $dsn .= "unix_socket=" . $socket . ";";
+            } else {
+                $dsn .= "host=" . $this->config['host'] . ";";
+                $dsn .= "port=" . $this->config['port'] . ";";
+            }
+            $dsn .= "dbname=" . $this->getDataBase() . ";";
+            $dsn .= "charset=" . $this->config['charset'] . ";";
+            $this->pdo = new PDO(
+                $dsn,
+                $this->config['username'],
+                $this->config['password']
+            );
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
         return $this->pdo;
@@ -113,7 +110,20 @@ trait Common {
      */
     public function mysqli(): mysqli {
         if (empty($this->mysqli)) {
-            $this->mysqli = new mysqli($this->config['host'], $this->config['username'], $this->config['password'], $this->getDataBase(), $this->config['port']);
+            if (!empty($socket = $this->config['unix_socket'] ?? '')) {
+                $port = null;
+            } else {
+                $port = $this->config['port'];
+                $socket = null;
+            }
+            $this->mysqli = new mysqli(
+                $this->config['host'],
+                $this->config['username'],
+                $this->config['password'],
+                $this->getDataBase(),
+                $port,
+                $socket
+            );
             $this->mysqli->set_charset($this->config['charset']);
         }
         return $this->mysqli;
@@ -251,5 +261,4 @@ trait Common {
     public function __destruct() {
         $this->close();
     }
-
 }
