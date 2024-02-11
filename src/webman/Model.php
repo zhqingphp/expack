@@ -73,7 +73,8 @@ class Model extends \support\Model {
         $arr = config('database.connections');
         $connection = ((!empty($default) && isset($arr[$default])) ? $default : $self->connection);
         $table = ($arr[$connection]['prefix'] . (!empty($table) ? $table : $self->getTable()));
-        $array = Db::connection($connection)->select('SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name="' . $table . '"');
+        $base = $arr[$connection]['database'];
+        $array = Db::connection($connection)->select('SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema="' . $base . '" AND table_name="' . $table . '"');
         foreach ($array as $v) {
             $data[$v->COLUMN_NAME] = $v;
         }
