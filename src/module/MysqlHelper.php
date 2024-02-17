@@ -388,6 +388,10 @@ class MysqlHelper {
                             $sql = "";
                         }
                     }
+                    $callable('tool', [
+                        'total' => $total,
+                        'count' => $count
+                    ]);
                     $data['code'] = 200;
                     $data['data'] = [
                         'table' => $ov,//表单总数
@@ -441,7 +445,7 @@ class MysqlHelper {
         $this->data['importCallable'] = (is_callable($callable)) ? $callable : ($callable === false ? "" : (function ($data) use ($res, $eol, $lang) {
             $content = "";
             $help = array_merge($data['help'], $lang);
-            //$data['help'] = $help;
+            $data['help'] = $help;
             switch ($data['type']) {
                 case "start":
                     $content .= $help['count'] . "  - " . $data['total'];
@@ -477,7 +481,7 @@ class MysqlHelper {
 
     /**
      * 导出sql文件
-     * @param string $FilePath sql文件路径
+     * @param string $FilePath sql文件路径(为空不保存，返回sql)
      * @param bool $IsTableData 是否导出表数据(默认为true)
      * @return array
      */
