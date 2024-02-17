@@ -449,7 +449,6 @@ class MysqlHelper {
             switch ($data['type']) {
                 case "start":
                     $content .= $help['count'] . "  - " . $data['total'];
-                    $content .= $eol;
                     break;
                 case "delete":
                 case "drop":
@@ -462,18 +461,16 @@ class MysqlHelper {
                     if (!empty($table = ($data['table'] ?? ''))) {
                         $content .= $table;
                     }
-                    $content .= $eol;
                     break;
                 case "error":
                 case "success":
                     $content .= $help[$data['type']];
-                    $content .= $eol;
                     break;
             }
             if (!empty($res) && is_callable($res)) {
                 $res($content, $data['type'], $data);
             } else {
-                echo $content;
+                echo $content . $eol;
             }
         }));
         return $this;
@@ -693,14 +690,12 @@ class MysqlHelper {
             switch ($data['type']) {
                 case "start":
                     $content .= $help['count'] . "  - " . $data['total'];
-                    $content .= $eol;
                     break;
                 case "delete":
                     $content .= $data['count'] . "/" . $data['total'] . ".";
                     $content .= $help[$data['type']];
                     $content .= " " . $data['table_percentage'] . "% ";
                     $content .= $data['table'];
-                    $content .= $eol;
                     break;
                 case "select":
                     $content .= $data['count'] . "/" . $data['total'] . ".";
@@ -710,7 +705,6 @@ class MysqlHelper {
                     if ($data['sum'] > 0) {
                         $content .= " - " . $data['sum'];
                     }
-                    $content .= $eol;
                     break;
                 case "insert":
                     if ($data['sum'] > 0) {
@@ -719,19 +713,17 @@ class MysqlHelper {
                         $content .= $help[$data['type']];
                         $content .= " " . $data['child_percentage'] . "% ";
                         $content .= $data['table'];
-                        $content .= $eol;
                     }
                     break;
                 case "error":
                 case "success":
                     $content .= $help[$data['type']];
-                    $content .= $eol;
                     break;
             }
             if (!empty($res) && is_callable($res)) {
                 $res($content, $data['type'], $data);
             } else {
-                echo $content;
+                echo $content . $eol;
             }
         }));
         return $this;
