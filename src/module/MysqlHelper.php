@@ -445,6 +445,7 @@ class MysqlHelper {
         $this->data['optExcludeTable'] = null;
         $this->data['optExcludeType'] = null;
         $this->data['importCallable'] = null;
+        $this->data['importIs'] = null;
         $data['time'] = static::decimal((microtime(true) - $start));//执行时间秒
         return $data;
     }
@@ -708,6 +709,7 @@ class MysqlHelper {
         $this->data['optExcludeTable'] = null;
         $this->data['optExcludeType'] = null;
         $this->data['exportCallable'] = null;
+        $this->data['exportIs'] = null;
         return $data;
     }
 
