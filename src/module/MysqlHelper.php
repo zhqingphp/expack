@@ -441,7 +441,7 @@ class MysqlHelper {
      * @param array $lang 语言包
      * @return $this
      */
-    public function importCallable(callable|bool $callable, callable|bool $res = false, string $eol = PHP_EOL, array $lang = []): static {
+    public function importCallable(callable|bool $callable = true, callable|bool $res = false, string $eol = PHP_EOL, array $lang = []): static {
         $this->data['importCallable'] = (is_callable($callable)) ? $callable : ($callable === false ? "" : (function ($data) use ($res, $eol, $lang) {
             $content = "";
             $help = array_merge($data['help'], $lang);
@@ -682,7 +682,7 @@ class MysqlHelper {
      * @param array $lang 语言包
      * @return $this
      */
-    public function exportCallable(callable|bool $callable = false, callable|bool $res = false, string $eol = PHP_EOL, array $lang = []): static {
+    public function exportCallable(callable|bool $callable = true, callable|bool $res = false, string $eol = PHP_EOL, array $lang = []): static {
         $this->data['exportCallable'] = (is_callable($callable)) ? $callable : ($callable === false ? "" : (function ($data) use ($res, $eol, $lang) {
             $content = "";
             $help = array_merge($data['help'], $lang);
