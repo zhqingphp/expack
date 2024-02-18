@@ -1,10 +1,10 @@
 <?php
 
-namespace zhqing\extend\frame;
+namespace zhqing\module;
 
 use Generator;
 
-trait File {
+class FileHelper {
     /**
      * 添加内容到文件
      * @param string|null $file 文件
@@ -13,7 +13,7 @@ trait File {
      * @param bool $type 是否使用锁定
      * @return bool|int
      */
-    public static function saveFileData(string|null $file, mixed $data, string|int|bool|null $sing = '', bool $type = false): bool|int {
+    public static function saveData(string|null $file, mixed $data, string|int|bool|null $sing = '', bool $type = false): bool|int {
         $file = !empty($file) ? $file : (__DIR__ . '/../../../file/fileData.cache');
         $content = is_callable($data) ? $data() : $data;
         if (!empty($sing)) {
@@ -22,11 +22,11 @@ trait File {
             }
             $arr[$sing] = $content;
         }
-        if (empty($type)) {
-            static::mkDir(dirname($file));
-            return @file_put_contents($file, serialize(($arr ?? $content)));
-        }
-        return static::saveLockFileData($file, ($arr ?? $content), true);
+        return (
+        !empty($type)
+            ? (static::saveLockData($file, ($arr ?? $content), true))
+            : (@file_put_contents(static::mkDir($file), serialize(($arr ?? $content))))
+        );
     }
 
     /**
@@ -37,13 +37,14 @@ trait File {
      * @param mixed $default 默认
      * @return mixed
      */
-    public static function getFileData(string|null $file = '', string|int|bool|null $sing = '', bool $type = false, mixed $default = ''): mixed {
+    public static function getData(string|null $file = '', string|int|bool|null $sing = '', bool $type = false, mixed $default = ''): mixed {
         $file = !empty($file) ? $file : (__DIR__ . '/../../../file/fileData.cache');
-        $content = empty($type) ? unserialize((@file_get_contents($file) ?? '')) : static::getLockFileData($file, true);
-        if (!empty($sing)) {
-            $content = (!empty($data = ($content[$sing] ?? $default)) ? $data : $default);
-        }
-        return $content;
+        $content = empty($type) ? unserialize((@file_get_contents($file) ?? '')) : static::getLockData($file, true);
+        return (
+        !empty($sing)
+            ? ((!empty($data = ($content[$sing] ?? $default)) ? $data : $default))
+            : $content
+        );
     }
 
     /**
@@ -64,8 +65,8 @@ trait File {
      * "x+" （创建一个新的文件并以读写方式打开，如果文件已存在则返回 FALSE 和一个错误）
      * @return bool
      */
-    public static function saveLockFileData(string $file, mixed $data, bool $type = false, string $mode = 'w'): bool {
-        static::mkDir(\dirname($file));
+    public static function saveLockData(string $file, mixed $data, bool $type = false, string $mode = 'w'): bool {
+        static::mkDir($file);
         $fp = \fopen($file, $mode);
         if (\flock($fp, LOCK_EX)) {
             $content = (is_callable($data) ? ($data()) : $data);
@@ -92,7 +93,7 @@ trait File {
      * "x+" （创建一个新的文件并以读写方式打开，如果文件已存在则返回 FALSE 和一个错误）
      * @return mixed
      */
-    public static function getLockFileData(string $file, bool $type = false, string $mode = 'r', mixed $data = ''): mixed {
+    public static function getLockData(string $file, bool $type = false, string $mode = 'r', mixed $data = ''): mixed {
         if (!empty(is_file($file))) {
             $fp = \fopen($file, $mode);
             if (\flock($fp, LOCK_SH)) {
@@ -111,15 +112,12 @@ trait File {
      * @return string|int|false
      */
     public static function phpCodeWhite(string $code, string|null $save = null): string|int|false {
-        //$tempFile = tempnam(sys_get_temp_dir(), "stripped_code");//保存到临时文件
         $tempFile = __DIR__ . '/../../../file/code/' . date("YmdHis") . '_' . rand(10000, 99999) . rand(10000, 99999) . '.php';
-        static::mkDir(\dirname($tempFile));
-        @file_put_contents($tempFile, $code);
-        $strippedCode = static::phpFileWhite($tempFile);
+        @file_put_contents(static::mkDir($tempFile), $code);
+        $strippedCode = static::phpWhite($tempFile);
         @unlink($tempFile);
         if (is_string($save) && !empty($save)) {
-            static::mkDir(dirname($save));
-            return @file_put_contents($save, $strippedCode);
+            return @file_put_contents(static::mkDir($save), $strippedCode);
         }
         return $strippedCode;
     }
@@ -130,12 +128,11 @@ trait File {
      * @param string|null $save 保存文件
      * @return string|int|false
      */
-    public static function phpFileWhite(string $file, string|null $save = null): string|int|false {
+    public static function phpWhite(string $file, string|null $save = null): string|int|false {
         if (is_file($file)) {
             $strippedCode = php_strip_whitespace($file);
             if (is_string($save) && !empty($save)) {
-                static::mkDir(dirname($save));
-                return @file_put_contents($save, $strippedCode);
+                return @file_put_contents(static::mkDir($save), $strippedCode);
             }
             return $strippedCode;
         }
@@ -156,7 +153,7 @@ trait File {
      * @param string $file
      * @return bool|string
      */
-    public static function phpFileHigh(string $file): bool|string {
+    public static function phpHigh(string $file): bool|string {
         if (is_file($file)) {
             return highlight_string(@file_get_contents($file), true);
         }
@@ -201,6 +198,20 @@ trait File {
     }
 
     /**
+     * yield读取文件
+     * @param $file
+     * @return Generator
+     */
+    private static function FileData($file): Generator {
+        if ($handle = fopen($file, 'r')) {
+            while (!feof($handle)) {
+                yield trim(fgets($handle));
+            }
+            fclose($handle);
+        }
+    }
+
+    /**
      * 复制文件
      * @param $filePath
      * @param $newFilePath
@@ -209,7 +220,7 @@ trait File {
     public static function copyFile($filePath, $newFilePath): bool|int {
         $type = false;
         if (is_readable($filePath)) {
-            static::mkDir(dirname($newFilePath));
+            static::mkDir($newFilePath);
             if (($handle1 = fopen($filePath, 'r')) && ($handle2 = fopen($newFilePath, 'w'))) {
                 $type = stream_copy_to_stream($handle1, $handle2);
                 fclose($handle1);
@@ -288,20 +299,6 @@ trait File {
     }
 
     /**
-     * yield读取文件
-     * @param $file
-     * @return Generator
-     */
-    private static function FileData($file): Generator {
-        if ($handle = fopen($file, 'r')) {
-            while (!feof($handle)) {
-                yield trim(fgets($handle));
-            }
-            fclose($handle);
-        }
-    }
-
-    /**
      * yield读取文件夹
      * @param $path
      * @param bool $isDir
@@ -331,5 +328,50 @@ trait File {
             }
             closedir($dh);
         }
+    }
+
+    /**
+     * 创造文件夹
+     * @param string $filePath 文件名
+     * @return string
+     */
+    public static function mkDir(string $filePath): string {
+        $path = dirname($filePath);
+        if (empty(is_dir($path))) {
+            mkdir($path, 0777, true);
+        }
+        return $filePath;
+    }
+
+    /**
+     * 数组转Json
+     * @param $data
+     * @param bool $type
+     * @return false|string
+     */
+    public static function json($data, bool $type = true): bool|string {
+        return $type ? \json_encode($data, JSON_NUMERIC_CHECK + JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES) : \json_encode($data, JSON_UNESCAPED_UNICODE + JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * 判断字符串是否json,返回array
+     * @param mixed $data
+     * @param bool $type
+     * @return mixed
+     */
+    public static function isJson(mixed $data, bool $type = true): mixed {
+        $data = \json_decode((is_string($data) ? ($data ?: '') : ''), $type);
+        return (($data && \is_object($data)) || (\is_array($data) && $data)) ? $data : [];
+    }
+
+    /**
+     * 替换内容
+     * @param string $str
+     * @param string $old
+     * @param string $new
+     * @return string
+     */
+    public static function strRep(string $str, string $old, string $new = ''): string {
+        return \str_replace($old, $new, $str);
     }
 }
