@@ -282,6 +282,7 @@ class MysqlHelper {
                     $ss = 0;//其它成功数量
                     $se = 0;//其它失败数量
                     $ov = 0;//表单总数
+                    $ks = 0;//不导入数量
                     $sql = '';//失败的记录
                     $fail = [];//错误的sql
                     $tabArr = [];//表单列表
@@ -359,16 +360,30 @@ class MysqlHelper {
                                     $tabArr[$table] = ($tabArr[$table] ?? 0) + 1;
                                 }
                                 if (!empty($IsTableData)) {
-                                    $callable('insert', [
-                                        'total' => $total,
-                                        'count' => $count,
-                                        'table' => $table
-                                    ]);
-                                    if ($this->exec($sql) !== false) {
-                                        ++$is;
+                                    //导出时判断表数据
+                                    $importIs = $this->getData('importIs');
+                                    if (!empty($importIs) && !empty(is_callable($importIs))) {
+                                        $insertArr = static::insertSqlToArray($sql);
+                                        $tableName = key($insertArr) ?: '';
+                                        $tableArray = $insertArr[key($insertArr)] ?? [];
+                                        $isSave = $importIs($tableName, $tableArray);
                                     } else {
-                                        ++$ie;
-                                        $fail[] = $sql;
+                                        $isSave = true;
+                                    }
+                                    if (!empty($isSave)) {
+                                        $callable('insert', [
+                                            'total' => $total,
+                                            'count' => $count,
+                                            'table' => $table
+                                        ]);
+                                        if ($this->exec($sql) !== false) {
+                                            ++$is;
+                                        } else {
+                                            ++$ie;
+                                            $fail[] = $sql;
+                                        }
+                                    } else {
+                                        ++$ks;
                                     }
                                 } else {
                                     $this->exec(static::setTableAutoSql($table));
@@ -406,6 +421,7 @@ class MysqlHelper {
                         'insert_error' => $ie,//添加记录失败数量
                         'set_success' => $ss,//其它成功数量
                         'set_error' => $se,//其它失败数量
+                        'not_import' => $ks,//不导入数量
                         'fail' => $fail,//失败的记录
                         'list' => $tabArr//成功的表单和记录数
                     ];
@@ -431,6 +447,16 @@ class MysqlHelper {
         $this->data['importCallable'] = null;
         $data['time'] = static::decimal((microtime(true) - $start));//执行时间秒
         return $data;
+    }
+
+    /**
+     * 导入时判断表数据，返回true=导入,false=不导入
+     * @param callable|bool $callable (表名,当前记录数据)
+     * @return $this
+     */
+    public function importIs(callable|bool $callable): static {
+        $this->data['importIs'] = $callable;
+        return $this;
     }
 
     /**
@@ -517,6 +543,7 @@ class MysqlHelper {
             $cs = 0;//创建表单数量
             $is = 0;//添加记录数量
             $ov = 0;//表单总数
+            $ks = 0;//不导出数量
             $tabArr = [];//表单列表
             $database = $this->config('database');//数据库名
             $driver = ucfirst(strtolower($this->getConfig('driver')));//数据库类型
@@ -592,45 +619,54 @@ class MysqlHelper {
                             'sum' => $sum
                         ]);
                         if (!empty($tableArray)) {
+                            $exportIs = $this->getData('exportIs');
                             $content .= static::gloss("Records of " . $tables);
                             $content .= "BEGIN;" . PHP_EOL;
                             ++$ss;
                             foreach ($tableArray as $val) {
                                 ++$child;
-                                $field = "";//字段
-                                $values = "";//值
-                                $callable('insert', [
-                                    'total' => $total,
-                                    'count' => $count,
-                                    'table' => $tables,
-                                    'sum' => $sum,
-                                    'child' => $child
-                                ]);
-                                foreach ($val as $k => $v) {
-                                    $field .= "`{$k}`,";
-                                    $fieldType = strtolower($fieldArray[$k]['DATA_TYPE'] ?? '');//字段类型
-                                    $default = $fieldArray[$k]['COLUMN_DEFAULT'] ?? NULL;//默认值
-                                    $value = (!empty($v) ? $v : $default);//值
-                                    if (!empty(in_array($fieldType, $this->field['int']))) {
-                                        $values .= (!empty($v) ? $v : (!empty($default) ? $default : 0)) . ",";
-                                    } else if ($value == null) {
-                                        $values .= "NULL, ";
-                                    } else if (!empty(in_array($fieldType, $this->field['hex']))) {
-                                        $value = "0x" . bin2hex($value);
-                                        $values .= $value . ", ";
-                                    } else if (!empty(in_array($fieldType, $this->field['room']))) {
-                                        $values .= "ST_GeomFromText('" . $value . "'),";
-                                    } else {
-                                        if (!empty($jsonArr = static::isJson($value)) || in_array($fieldType, $this->field['json'])) {
-                                            $value = static::jsonCompress($jsonArr);
+                                //导出时判断表数据
+                                $isSave = (!empty($exportIs) && !empty(is_callable($exportIs))) ? $exportIs($table, $val) : true;
+                                if ($isSave) {
+                                    $field = "";//字段
+                                    $values = "";//值
+                                    $callable('insert', [
+                                        'total' => $total,
+                                        'count' => $count,
+                                        'table' => $tables,
+                                        'sum' => $sum,
+                                        'child' => $child
+                                    ]);
+                                    foreach ($val as $k => $v) {
+                                        $field .= "`{$k}`,";
+                                        $fieldType = strtolower($fieldArray[$k]['DATA_TYPE'] ?? '');//字段类型
+                                        $default = $fieldArray[$k]['COLUMN_DEFAULT'] ?? NULL;//默认值
+                                        $value = (!empty($v) ? $v : $default);//值
+                                        if (!empty(in_array($fieldType, $this->field['int']))) {
+                                            $values .= (!empty($v) ? $v : (!empty($default) ? $default : 0)) . ",";
+                                        } else if ($value == null) {
+                                            $values .= "NULL, ";
+                                        } else if (!empty(in_array($fieldType, $this->field['hex']))) {
+                                            $value = "0x" . bin2hex($value);
+                                            $values .= $value . ", ";
+                                        } else if (!empty(in_array($fieldType, $this->field['room']))) {
+                                            $values .= "ST_GeomFromText('" . $value . "'),";
+                                        } else {
+                                            if (!empty($jsonArr = static::isJson($value)) || in_array($fieldType, $this->field['json'])) {
+                                                $value = static::jsonCompress($jsonArr);
+                                            }
+                                            $values .= $this->quote($value) . ",";
                                         }
-                                        $values .= $this->quote($value) . ",";
                                     }
+                                    if (!empty($field)) {
+                                        $field = trim(trim($field), ",");
+                                        $values = trim(trim($values), ",");
+                                        $content .= "INSERT INTO `{$tables}` ({$field}) VALUES ({$values});" . PHP_EOL;
+                                        ++$is;
+                                    }
+                                } else {
+                                    ++$ks;
                                 }
-                                $field = trim(trim($field), ",");
-                                $values = trim(trim($values), ",");
-                                $content .= "INSERT INTO `{$tables}` ({$field}) VALUES ({$values});" . PHP_EOL;
-                                ++$is;
                             }
                             $content .= "COMMIT;" . PHP_EOL;
                             ++$ss;
@@ -652,6 +688,7 @@ class MysqlHelper {
                 'create_success' => $cs,//创建表单数量
                 'insert_success' => $is,//添加记录数量
                 'set_success' => $ss,//其它数量
+                'not_export' => $ks,//不导出数量
                 'list' => $tabArr//成功的表单和记录数
             ];
             $data['time'] = $executionTime;//执行时间秒
@@ -672,6 +709,16 @@ class MysqlHelper {
         $this->data['optExcludeType'] = null;
         $this->data['exportCallable'] = null;
         return $data;
+    }
+
+    /**
+     * 导出时判断表数据，返回true=导出,false=不导出
+     * @param callable|bool $callable (表名,当前记录数据)
+     * @return $this
+     */
+    public function exportIs(callable|bool $callable): static {
+        $this->data['exportIs'] = $callable;
+        return $this;
     }
 
     /**
@@ -1053,6 +1100,35 @@ class MysqlHelper {
         $json = json_encode($array, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $json = preg_replace('/^\s+|\s+$/m', '', $json);
         return preg_replace('/\s+/', '', $json);
+    }
+
+    /**
+     * 添加记录SQL转换成array
+     * @param $sql
+     * @return array
+     */
+    public static function insertSqlToArray($sql): array {
+        preg_match_all("/INSERT INTO ((`([^`]+)`)|(\b[^`]+\b)) \((.*)\) VALUES \((.*)\)/", $sql, $matches);
+        $tables = $matches[1] ?? [];
+        $columns = $matches[5] ?? [];
+        $values = $matches[6] ?? [];
+        $dataArray = [];
+        foreach ($tables as $key => $table) {
+            $columnArray = explode(",", $columns[$key]);
+            $columnFormattedArray = [];
+            foreach ($columnArray as $column) {
+                $column = trim(trim($column), "`");
+                $columnFormattedArray[] = $column;
+            }
+            preg_match_all("/'([^']+)'|([^,]+)/", $values[$key], $matches);
+            $valueFormattedArray = [];
+            foreach ($matches[0] as $match) {
+                $value = trim(trim($match), "'");
+                $valueFormattedArray[] = $value;
+            }
+            $dataArray[trim(trim($table), "`")] = array_combine($columnFormattedArray, $valueFormattedArray);
+        }
+        return $dataArray;
     }
 
     /**
