@@ -410,7 +410,7 @@ class MysqlHelper {
                     $data['code'] = 200;
                     $data['data'] = [
                         'table' => $ov,//表单总数
-                        'count' => ($ds + $de + $cs + $ce + $is + $ie + $ss + $se),//执行总数
+                        'count' => ($ds + $de + $cs + $ce + $is + $ie + $ss + $se + $ks),//执行总数
                         'success' => ($ds + $cs + $is + $ss),//成功总数
                         'error' => ($de + $ce + $ie + $se),//失败总数
                         'drop_success' => $ds,//删除表单成功数量
@@ -683,7 +683,7 @@ class MysqlHelper {
             $data['data'] = $content;
             $data['count'] = [
                 'table' => $ov,//表单总数
-                'count' => ($ds + $cs + $is + $ss),//执行总数
+                'count' => ($ds + $cs + $is + $ss + $ks),//执行总数
                 'drop_success' => $ds,//删除表单数量
                 'create_success' => $cs,//创建表单数量
                 'insert_success' => $is,//添加记录数量
