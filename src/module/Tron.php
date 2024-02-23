@@ -378,7 +378,7 @@ class Tron {
             } else {
                 $url = trim($this->TRON_API_HOST, '/') . '/v1/accounts/' . $address . '/transactions/trc20?limit=' . $limit . '&contract_address=' . $this->TRON_CONTRACT_ADDRESS;
             }
-            $curl = Curl::get($url)->timeOut(5)->timeConnect(5)->exec();
+            $curl = Curl::get($url)->timeOut(10)->timeConnect(10)->exec();
             $data = Frame::isJson($curl->body());
             $array['success'] = $data['success'] ?? false;
             $array['data'] = $data['data'] ?? [];
@@ -432,7 +432,7 @@ class Tron {
      */
     public function getAllTransaction($address, int $start = 0, int $limit = 50, string $count = 'true', string $sort = '-timestamp'): array {
         $url = trim($this->TRON_TRON_ADDRESS, '/') . "/api/transaction?sort={$sort}&count={$count}&limit={$limit}&start={$start}&address=" . $address;
-        $curl = Curl::get($url)->timeOut(5)->timeConnect(5)->referer()->exec();
+        $curl = Curl::get($url)->timeOut(10)->timeConnect(10)->referer()->exec();
         return Frame::isJson($curl->body());
     }
 
