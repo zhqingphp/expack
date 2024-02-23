@@ -880,10 +880,18 @@ class MysqlHelper {
     /**
      * 判断mysql数据库是否存在
      * @param string $dbname
+     * @param bool $type 是否创建数据库
      * @return bool
      */
-    public function isBase(string $dbname): bool {
-        return ($this->query(static::isBaseSql($dbname))->rowCount() > 0);
+    public function isBase(string $dbname, bool $type = false): bool {
+        $isBase = ($this->query(static::isBaseSql($dbname))->rowCount() > 0);
+        if (!empty($type)) {
+            if (!empty($isBase)) {
+                $this->exec(static::delBaseSql($dbname));
+            }
+            return $this->exec(static::addBaseSql($dbname));
+        }
+        return $isBase;
     }
 
     /**
@@ -1230,7 +1238,7 @@ class MysqlHelper {
         }
         return $value;
     }
-    
+
     /**
      * =======================================================
      * SQL方法
