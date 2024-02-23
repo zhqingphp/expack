@@ -1513,4 +1513,15 @@ class MysqlHelper {
         $values = implode(",", $values);
         return "UPDATE `" . $table . "` SET " . $values . " WHERE " . $where . ";";
     }
+
+    /**
+     * 创建mysql数据库
+     * @param string $dbname 名称
+     * @param string $charset 字符集
+     * @param string $collation 排序规则
+     * @return string
+     */
+    public static function addBaseSql(string $dbname, string $charset = 'utf8mb4', string $collation = 'utf8mb4_general_ci'): string {
+        return "CREATE DATABASE `{$dbname}` CHARACTER SET {$charset} COLLATE {$collation};";
+    }
 }
