@@ -878,20 +878,29 @@ class MysqlHelper {
      */
 
     /**
-     * 判断mysql数据库是否存在
+     * 创建数据库
      * @param string $dbname
-     * @param bool $type 是否创建数据库
+     * @param bool $type 是否强制创建数据库(数据库存在时删除原数据库)
      * @return bool
      */
-    public function isBase(string $dbname, bool $type = false): bool {
-        $isBase = ($this->query(static::isBaseSql($dbname))->rowCount() > 0);
-        if (!empty($type)) {
-            if (!empty($isBase)) {
+    public function addBase(string $dbname, bool $type = false): bool {
+        $isBase = $this->isBase($dbname);
+        if (!empty($isBase)) {
+            if (!empty($type)) {
                 $this->exec(static::delBaseSql($dbname));
+                return (bool)$this->exec(static::addBaseSql($dbname));
             }
-            return $this->exec(static::addBaseSql($dbname));
         }
-        return $isBase;
+        return true;
+    }
+
+    /**
+     * 判断mysql数据库是否存在
+     * @param string $dbname
+     * @return bool
+     */
+    public function isBase(string $dbname): bool {
+        return ($this->query(static::isBaseSql($dbname))->rowCount() > 0);
     }
 
     /**
