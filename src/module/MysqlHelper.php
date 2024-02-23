@@ -876,6 +876,16 @@ class MysqlHelper {
      * 数据方法
      * =======================================================
      */
+
+    /**
+     * 判断mysql数据库是否存在
+     * @param string $dbname
+     * @return bool
+     */
+    public function isBase(string $dbname): bool {
+        return ($this->query(static::isBaseSql($dbname))->rowCount() > 0);
+    }
+
     /**
      * 获取表单全称
      * @param string $table
@@ -1515,7 +1525,7 @@ class MysqlHelper {
     }
 
     /**
-     * 创建mysql数据库
+     * 创建mysql数据库SQL
      * @param string $dbname 名称
      * @param string $charset 字符集
      * @param string $collation 排序规则
@@ -1523,5 +1533,23 @@ class MysqlHelper {
      */
     public static function addBaseSql(string $dbname, string $charset = 'utf8mb4', string $collation = 'utf8mb4_general_ci'): string {
         return "CREATE DATABASE `{$dbname}` CHARACTER SET {$charset} COLLATE {$collation};";
+    }
+
+    /**
+     * 删除mysql数据库SQL
+     * @param string $dbname 名称
+     * @return string
+     */
+    public static function delBaseSql(string $dbname): string {
+        return "DROP DATABASE `{$dbname}`;";
+    }
+
+    /**
+     * 判断mysql数据库是否存在SQL
+     * @param string $dbname 名称
+     * @return string
+     */
+    public static function isBaseSql(string $dbname): string {
+        return "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$dbname';";
     }
 }
