@@ -888,10 +888,11 @@ class MysqlHelper {
         if (!empty($isBase)) {
             if (!empty($type)) {
                 $this->exec(static::delBaseSql($dbname));
-                return (bool)$this->exec(static::addBaseSql($dbname));
+            } else {
+                return true;
             }
         }
-        return true;
+        return (bool)$this->exec(static::addBaseSql($dbname));
     }
 
     /**
