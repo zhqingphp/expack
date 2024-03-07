@@ -4,9 +4,8 @@ namespace zhqing\module;
 
 class EnvHelper {
 
-    public string $env_file = "";
-    public array $env_array = [];
-    public string $save_content = '';
+    private string $env_file;
+    private array $env_array = [];
 
     public function __construct($env_file) {
         $this->env_file = $env_file;
@@ -19,7 +18,7 @@ class EnvHelper {
      * @param mixed|string $data
      * @return int
      */
-    public function set(string|array $key, mixed $data = ""): int {
+    public function save(string|array $key, mixed $data = ""): int {
         $status = 0;
         $way = function ($k, $v) {
             $k = strtoupper(trim($k));
@@ -55,9 +54,13 @@ class EnvHelper {
      * 获取
      * @param string $key
      * @param mixed $default
+     * @param bool $type
      * @return mixed
      */
-    public function get(string $key = '', mixed $default = null): mixed {
+    public function seek(string $key = '', mixed $default = null, bool $type = true): mixed {
+        if ($type === true) {
+            $this->toArray();
+        }
         return !empty($key) ? ($this->env_array[strtoupper($key)] ?? $default) : $this->env_array;
     }
 
@@ -66,7 +69,7 @@ class EnvHelper {
      * @param string|array $key
      * @return int
      */
-    public function del(string|array $key): int {
+    public function delete(string|array $key): int {
         $status = 0;
         if (is_array($key)) {
             foreach ($key as $v) {
@@ -101,9 +104,7 @@ class EnvHelper {
                 $save_array[] = $k . "=" . ($v === null ? 'null' : ($v === false ? 'false' : ($v === true ? 'true' : $v)));
             }
         }
-        $this->save_content = join(PHP_EOL, $save_array);
-        @file_put_contents($this->env_file, $this->save_content);
-        $this->toArray();
+        @file_put_contents($this->env_file, join(PHP_EOL, $save_array));
     }
 
     /**
@@ -131,5 +132,38 @@ class EnvHelper {
                 $this->env_array[$k] = ($iv == 'null' ? null : ($iv == 'false' ? false : ($iv == 'true' ? true : $v)));
             }
         }
+    }
+
+    /**
+     * @return static
+     */
+    public static function webMan(): static {
+        return (new static((base_path() . '/.env')));
+    }
+
+    /**
+     * @param string|array $key
+     * @param mixed|string $data
+     * @return int
+     */
+    public static function set(string|array $key, mixed $data = ""): int {
+        return static::webMan()->save($key, $data);
+    }
+
+    /**
+     * @param string $key
+     * @param mixed|null $default
+     * @return mixed
+     */
+    public static function get(string $key = '', mixed $default = null): mixed {
+        return static::webMan()->seek($key, $default, false);
+    }
+
+    /**
+     * @param string|array $key
+     * @return int
+     */
+    public static function del(string|array $key): int {
+        return static::webMan()->delete($key);
     }
 }

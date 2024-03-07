@@ -2,47 +2,38 @@
 
 use zhqing\module\EnvHelper;
 
-if (!function_exists('newEnvWebMan')) {
-    /**
-     * 实例env
-     * @return EnvHelper
-     */
-    function newEnvWebMan(): EnvHelper {
-        return newEnv((base_path() . "/.env"));
-    }
-}
-if (!function_exists('setEnvWebMan')) {
+if (!function_exists('set_env')) {
     /**
      * 保存env
      * @param string|array $key
      * @param mixed $data
      * @return int
      */
-    function setEnvWebMan(string|array $key, mixed $data = ""): int {
-        return newEnvWebMan()->set($key, $data);
+    function set_env(string|array $key, mixed $data = ""): int {
+        return EnvHelper::set($key, $data);
     }
 }
 
-if (!function_exists('getEnvWebMan')) {
+if (!function_exists('get_env')) {
     /**
      * 获取env
      * @param string $key
      * @param mixed|null $default
      * @return mixed
      */
-    function getEnvWebMan(string $key = '', mixed $default = null): mixed {
-        return newEnvWebMan()->get($key, $default);
+    function get_env(string $key = '', mixed $default = null): mixed {
+        return EnvHelper::get($key, $default);
     }
 }
 
-if (!function_exists('delEnvWebMan')) {
+if (!function_exists('del_env')) {
     /**
      * 删除env
      * @param string $key
      * @return int
      */
-    function delEnvWebMan(string $key): int {
-        return newEnvWebMan()->del($key);
+    function del_env(string $key): int {
+        return EnvHelper::del($key);
     }
 }
 
