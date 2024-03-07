@@ -16,9 +16,9 @@ if (!function_exists('setEnvWebMan')) {
      * 保存env
      * @param string|array $key
      * @param mixed $data
-     * @return bool|int
+     * @return int
      */
-    function setEnvWebMan(string|array $key, mixed $data = ""): bool|int {
+    function setEnvWebMan(string|array $key, mixed $data = ""): int {
         return newEnvWebMan()->set($key, $data);
     }
 }
