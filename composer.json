@@ -10,7 +10,8 @@
       "zhqing\\":"src/"
     },
     "files":[
-      "src/function.php"
+      "src/function.php",
+      "src/webman.php"
     ]
   },
   "authors":[

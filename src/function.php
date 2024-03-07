@@ -1,6 +1,7 @@
 <?php
 
 use zhqing\extend\Frame;
+use zhqing\module\EnvHelper;
 
 if (!function_exists('ps')) {
     function ps($data, $type = true) {
@@ -29,17 +30,7 @@ if (!function_exists('loadJump')) {
     }
 
 }
-if (!function_exists('rs')) {
-    function rs($data) {
-        return response('<pre>' . print_r($data, true) . '</pre>');
-    }
-}
-if (!function_exists('workError')) {
-    function workError() {
-        $html = '<html><head><title>404 Not Found</title></head><body><center><h1>404 Not Found</h1></center><hr></body></html>';
-        return \response($html, 404);
-    }
-}
+
 if (!function_exists('toArr')) {
     function toArr($data) {
         return !empty($data) ? $data->toArray() : [];
@@ -154,20 +145,6 @@ if (!function_exists('monthTime')) {
     }
 }
 /**
- * 设置cli颜色
- * @param $data
- * @param int $type 1-9不同色彩
- * @return string
- */
-
-if (!function_exists('cliColor')) {
-    function cliColor($data, int $type = 1): string {
-        $req = function_exists('request');
-        return ((isCli() && (!empty($req) && empty(request()))) ? ("\033[38;5;" . $type . ";1m" . $data . "\033[0m") : ($data));
-    }
-}
-
-/**
  * 判断是否Cli
  */
 if (!function_exists('isCli')) {
@@ -200,19 +177,6 @@ if (!function_exists('getArr')) {
         return Frame::getStrArr($data, $key, $default);
     }
 }
-//开启跨域
-if (!function_exists('resCross')) {
-    function resCross(array $header = [], $type = ''): array {
-        $mime = ['xml' => ['Content-Type' => 'text/xml'], 'json' => ['Content-Type' => 'application/json']];
-        return array_merge((!empty($type) ? array_merge($header, ($mime[$type] ?? [])) : $header), [
-            'Access-Control-Allow-Credentials' => 'true',
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Allow-Methods' => '*',
-            'Access-Control-Allow-Headers' => 'Content-Type,Authorization,X-Requested-With,Accept,Origin,requesttype'
-        ]);
-    }
-}
-
 if (!function_exists('resCome')) {
     function resCome($data, $msg = ''): array {
         return ['code' => 200, 'data' => $data, 'msg' => $msg];
@@ -232,13 +196,6 @@ if (!function_exists('getOrderId')) {
     }
 }
 
-if (!function_exists('getProtocol')) {
-    function getProtocol($domain = ''): string {
-        $domain = !empty($domain) ? $domain : request()->header('referer', getenv('APP_HTTP') . '://');
-        return join(array_slice(explode('://', $domain), 0, 1));
-    }
-}
-
 
 if (!function_exists('getNowTime')) {
     /**
@@ -252,20 +209,6 @@ if (!function_exists('getNowTime')) {
     }
 }
 
-
-if (!function_exists('getArrDate')) {
-    /**
-     * 通过$reset获取$array
-     * @param array $reset ['aa']=获取aa  ['aa as bb']=aa设置别名bb  ['aa as bb'=>'11']=aa设置别名bb(空值时设置11),['bb'=>'22']=bb设置值22
-     * @param array $array 数据
-     * @param array $arr 返回预设置值
-     * @return array
-     */
-    function getArrDate(array $reset, array $array, array $arr = []): array {
-        return Frame::getArrDate($reset, $array, $arr);
-    }
-}
-
 if (!function_exists('repBody')) {
     /**
      * 替换内容
@@ -275,5 +218,16 @@ if (!function_exists('repBody')) {
      */
     function repBody(string $body, array $preg): string {
         return Frame::repBody($body, $preg);
+    }
+}
+
+if (!function_exists('newEnv')) {
+    /**
+     * 实例env
+     * @param string $env_file
+     * @return EnvHelper
+     */
+    function newEnv(string $env_file): EnvHelper {
+        return (new EnvHelper($env_file));
     }
 }

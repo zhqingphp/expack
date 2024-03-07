@@ -432,7 +432,7 @@ class Tron {
      */
     public function getAllTransaction($address, int $start = 0, int $limit = 50, string $count = 'true', string $sort = '-timestamp'): array {
         $url = trim($this->TRON_TRON_ADDRESS, '/') . "/api/transaction?sort={$sort}&count={$count}&limit={$limit}&start={$start}&address=" . $address;
-        $curl = Curl::get($url)->timeOut(10)->timeConnect(10)->referer()->exec();
+        $curl = Curl::get($url)->timeOut(15)->timeConnect(15)->referer()->exec();
         return Frame::isJson($curl->body());
     }
 
