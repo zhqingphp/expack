@@ -93,7 +93,7 @@ class DatabaseSql {
     public function backup(string $dir, array $arr, array $data = []): array {
         foreach ($arr as $k => $val) {
             foreach ($val as $v) {
-                $path = $k . "/" . trim(($this->conf['database'] . "/" . date("YmdHis") . ".sql"), '/');
+                $path = $k . "/" . trim(($v . "/" . date("YmdHis") . ".sql"), '/');
                 $data[$k][$v] = $this->opt($k)->set($v)->path($dir)->exec($path, false);
             }
         }
