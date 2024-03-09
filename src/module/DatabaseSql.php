@@ -78,7 +78,7 @@ class DatabaseSql {
         $file = !empty($file) ? trim($file, '/') : trim(($this->conf['database'] . "/" . date("YmdHis") . ".sql"), '/');
         $FilePath = $path . "/" . $file;
         $dir = dirname($FilePath);
-        if (is_dir($dir)) mkdir($dir, 0777, true);
+        if (empty(is_dir($dir))) mkdir($dir, 0777, true);
         $mysql = new MysqlHelper($this->conf);
         return $mysql->exportCallable($type)->export($FilePath);
     }
