@@ -87,14 +87,15 @@ class DatabaseSql {
      * 执行备份
      * @param string $dir 保存目录
      * @param array $arr ['配置'=>['数据库']]
+     * @param bool $type 是否显示执行过程
      * @param array $data
      * @return array
      */
-    public function backup(string $dir, array $arr, array $data = []): array {
+    public function backup(string $dir, array $arr, bool $type = false, array $data = []): array {
         foreach ($arr as $k => $val) {
             foreach ($val as $v) {
                 $path = $k . "/" . trim(($v . "/" . date("YmdHis") . ".sql"), '/');
-                $data[$k][$v] = $this->opt($k)->set($v)->path($dir)->exec($path, false);
+                $data[$k][$v] = $this->opt($k)->set($v)->path($dir)->exec($path, $type);
             }
         }
         return $data;
@@ -103,7 +104,7 @@ class DatabaseSql {
     /**
      * 还原
      * @param string $FilePath
-     * @param bool $type
+     * @param bool $type 是否显示执行过程
      * @return array
      */
     public function regain(string $FilePath, bool $type = true): array {
