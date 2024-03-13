@@ -378,7 +378,7 @@ class Tron {
             } else {
                 $url = trim($this->TRON_API_HOST, '/') . '/v1/accounts/' . $address . '/transactions/trc20?limit=' . $limit . '&contract_address=' . $this->TRON_CONTRACT_ADDRESS;
             }
-            $curl = Curl::get($url)->timeOut(10)->timeConnect(10)->exec();
+            $curl = Curl::get($url)->timeOut(15)->timeConnect(15)->exec();
             $data = Frame::isJson($curl->body());
             $array['success'] = $data['success'] ?? false;
             $array['data'] = $data['data'] ?? [];
@@ -405,6 +405,7 @@ class Tron {
             $arr['status'] = ($status == 'transfer' ? 'success' : $status);//交易状态[FAIL,SUCCESS]
             $arr['hash'] = Frame::getStrArr($v, 'transaction_id');//交易哈希号
             $arr['timestamp'] = Frame::getStrArr($v, 'block_timestamp');//未处理交易时间
+            $arr['tradetime'] = seekDate(strToDate($arr['timestamp']));//未处理交易时间
             $arr['time'] = strToDate($arr['timestamp']) + 60 * 60 * 8;//交易时间+8小时等北京时间
             $arr['date'] = seekDate($arr['time']);//北京交易时间
             $arr['from'] = Frame::getStrArr($v, 'from', '');//付款地址
@@ -528,5 +529,53 @@ class Tron {
     public function toMoney($data, int $scale = 0) {
         $scale = ($scale > 0 ? $scale : $this->TRON_DECIMALS);
         return Frame::money(((!empty($data) ? $data : 0) / pow(10, $scale)), $scale, '');
+    }
+
+    /**
+     * @param int|float|string $num
+     * @param int $decimals
+     * @return float
+     */
+    public static function number(int|float|string $num, int $decimals = 2): float {
+        return number_format($num, $decimals, '.', '');
+    }
+
+    /**
+     * 检查tron ,统一北京时间
+     * @param string $address 收款地址
+     * @param array $array ['money' => '收款金额', 'top' => '收款开始时间', 'end' => '收款结束时间']
+     * @param int $time 北京时间差
+     * @param array $res
+     * @param array $balance
+     * @return array
+     */
+    public function tronExamine(string $address, array $array, int $time = 0, array $res = [], array $balance = []): array {
+        if (!empty($address) && !empty($array)) {
+            $arr = $this->getNewTrade($address);
+            if (!empty($arr) && ($arr['count'] ?? 0) > 0 && !empty($list = $arr['data'] ?? [])) {
+                foreach ($array as $v) {
+                    $balance[] = static::number($v['money']);
+                }
+                $censor = function (int|float $money, int $date) use ($array, $time) {
+                    foreach ($array as $v) {
+                        $amount = static::number($v['money']);
+                        $date = ($date + $time);
+                        if ($amount == $money && ($v['top'] <= $date && $v['end'] >= $date)) {
+                            return $v;
+                        }
+                    }
+                    return false;
+                };
+                foreach ($list as $v) {
+                    $amount = static::number($v['amount']);
+                    if ($v['type'] == 1 && $v['status'] == 'success' && in_array($amount, $balance)) {
+                        if (!empty($data = $censor($amount, ((int)($v['time']))))) {
+                            $res[] = array_merge($data, ['tron' => $v]);
+                        }
+                    }
+                }
+            }
+        }
+        return $res;
     }
 }
