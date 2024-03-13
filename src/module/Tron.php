@@ -365,7 +365,6 @@ class Tron {
 
     /**
      * 查询最新交易
-     * https://api.trongrid.io/v1/accounts/TEEAuwA36kNc5RC71VnuDTpEqUWB14cEUg/transactions/trc20?limit=50&contract_address=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
      * @param string $address 要查询的钱包
      * @param int|string $limit int=最大200条,string=下一页
      * @param array $array
@@ -423,7 +422,6 @@ class Tron {
 
     /**
      * 查询所有交易记录
-     * https://apiasia.tronscan.io:5566/api/transaction?sort=-timestamp&count=true&limit=50&start=0&address=TEEAuwA36kNc5RC71VnuDTpEqUWB14cEUg
      * @param $address
      * @param int $start //起始记录
      * @param int $limit //最大50条记录
@@ -541,17 +539,18 @@ class Tron {
     }
 
     /**
-     * 检查tron ,统一北京时间
+     * 检查tron最新交易 ,统一北京时间
      * @param string $address 收款地址
      * @param array $array ['money' => '收款金额', 'top' => '收款开始时间', 'end' => '收款结束时间']
+     * @param int|string $limit int=最大200条,string=next下一个
      * @param int $time 北京时间差
      * @param array $res
      * @param array $balance
      * @return array
      */
-    public function tronExamine(string $address, array $array, int $time = 0, array $res = [], array $balance = []): array {
+    public function tronExamine(string $address, array $array, int|string $limit = 200, int $time = 0, array $res = [], array $balance = []): array {
         if (!empty($address) && !empty($array)) {
-            $arr = $this->getNewTrade($address);
+            $arr = $this->getNewTrade($address, $limit);
             if (!empty($arr) && ($arr['count'] ?? 0) > 0 && !empty($list = $arr['data'] ?? [])) {
                 foreach ($array as $v) {
                     $balance[] = static::number($v['money']);
@@ -569,6 +568,47 @@ class Tron {
                 foreach ($list as $v) {
                     $amount = static::number($v['amount']);
                     if ($v['type'] == 1 && $v['status'] == 'success' && in_array($amount, $balance)) {
+                        if (!empty($data = $censor($amount, ((int)($v['time']))))) {
+                            $res[] = array_merge($data, ['tron' => $v]);
+                        }
+                    }
+                }
+            }
+        }
+        return $res;
+    }
+
+    /**
+     * 检查tron全部交易 ,统一北京时间
+     * @param string $address 收款地址
+     * @param array $array ['money' => '收款金额', 'top' => '收款开始时间', 'end' => '收款结束时间']
+     * @param int|string $limit int=最大200条,string=next下一个
+     * @param int $time 北京时间差
+     * @param array $sort
+     * @param array $res
+     * @param array $balance
+     * @return array
+     */
+    public function tronAllExamine(string $address, array $array, int|string $limit = 50, int $time = 0, array $sort = ['trc20'], array $res = [], array $balance = []): array {
+        if (!empty($address) && !empty($array)) {
+            $arr = $this->getAllTrade($address, $limit);
+            if (!empty($arr) && ($arr['count'] ?? 0) > 0 && !empty($list = $arr['data'] ?? [])) {
+                foreach ($array as $v) {
+                    $balance[] = static::number($v['money']);
+                }
+                $censor = function (int|float $money, int $date) use ($array, $time) {
+                    foreach ($array as $v) {
+                        $amount = static::number($v['money']);
+                        $date = ($date + $time);
+                        if ($amount == $money && ($v['top'] <= $date && $v['end'] >= $date)) {
+                            return $v;
+                        }
+                    }
+                    return false;
+                };
+                foreach ($list as $v) {
+                    $amount = static::number($v['amount']);
+                    if ($v['type'] == 1 && $v['status'] == 'success' && in_array($v['sort'], $sort) && in_array($amount, $balance)) {
                         if (!empty($data = $censor($amount, ((int)($v['time']))))) {
                             $res[] = array_merge($data, ['tron' => $v]);
                         }
