@@ -404,9 +404,8 @@ class Tron {
             $arr['status'] = ($status == 'transfer' ? 'success' : $status);//交易状态[FAIL,SUCCESS]
             $arr['hash'] = Frame::getStrArr($v, 'transaction_id');//交易哈希号
             $arr['timestamp'] = Frame::getStrArr($v, 'block_timestamp');//未处理交易时间
-            $arr['tradetime'] = seekDate(strToDate($arr['timestamp']));//未处理交易时间
-            $arr['time'] = strToDate($arr['timestamp']) + 60 * 60 * 8;//交易时间+8小时等北京时间
-            $arr['date'] = seekDate($arr['time']);//北京交易时间
+            $arr['time'] = strToDate($arr['timestamp']);//交易时间
+            $arr['date'] = seekDate($arr['time']);//交易时间
             $arr['from'] = Frame::getStrArr($v, 'from', '');//付款地址
             $arr['to'] = Frame::getStrArr($v, 'to', '');//收款地址
             $arr['amount'] = $this->toMoney(Frame::getStrArr($v, 'value', 0), Frame::getStrArr($v, 'token_info.decimals', 0));//金额
@@ -463,8 +462,8 @@ class Tron {
                 $arr['status'] = strtolower(Frame::getStrArr($v, 'result', ''));//交易状态[FAIL,SUCCESS]
                 $arr['hash'] = Frame::getStrArr($v, 'hash', '');//交易哈希
                 $arr['timestamp'] = Frame::getStrArr($v, 'timestamp', time());//未处理交易时间
-                $arr['time'] = strToDate($arr['timestamp']) + 60 * 60 * 8;//交易时间+8小时等北京时间
-                $arr['date'] = seekDate($arr['time']);//北京交易时间
+                $arr['time'] = strToDate($arr['timestamp']);//交易时间
+                $arr['date'] = seekDate($arr['time']);//交易时间
                 $arr['from'] = Frame::getStrArr($v, 'contractData.owner_address', '');//付款地址
                 $scale = Frame::getStrArr($v, 'tokenInfo.tokenDecimal', 0);
                 if ($contractType == 31) {
