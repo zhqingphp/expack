@@ -1,6 +1,5 @@
 if [ "$1" = "d" ]; then
   sudo apt-get install docker docker-compose docker-ce docker-ce-cli containerd.io -y
-
 elif [ "$1" = "t" ]; then
   echo ""
   echo "######################################"
@@ -15,14 +14,14 @@ elif [ "$1" = "t" ]; then
   echo "前序准备ing"
   ip=$(curl -4 ip.sb)
   hex=$(openssl rand -hex 16)
-
-  read -p "请设置端口（1-65535）（默认随机生成）：" PORT
+  read -p "请设置链接端口（1-65535）（默认随机生成）：" PORT
   if [[ -n $PORT ]]; then
     port=$PORT
   else
     port=$RANDOM
   fi
-  echo "端口为 $port"
+  echo "链接端口为 $port"
+  echo ""
   read -p "请设置secret（回车自动生成）：" SECRET
   if [[ -n $SECRET ]]; then
     secret=$SECRET
@@ -30,12 +29,13 @@ elif [ "$1" = "t" ]; then
     secret=$hex
   fi
   echo " secret为 $secret"
+  echo ""
 
-  read -p "请设置容器名称（默认为 tg_mtg）" DNAME
+  read -p "请设置容器名称（默认为 t_mtg）" DNAME
   if [[ -n $DNAME ]]; then
     name=$DNAME
   else
-    name="tg_mtg"
+    name="t_mtg"
   fi
   echo "容器名称为 $name"
   echo ""
@@ -43,13 +43,13 @@ elif [ "$1" = "t" ]; then
   docker rm -f $name
   docker pull telegrammessenger/proxy
   docker run -d -p$port:443 --name=$name --restart=always -v proxy-config:/data -e SECRET=$secret telegrammessenger/proxy:latest
+  echo ""
   echo "链接为 tg://proxy?server=$ip&port=$port&secret=$secret"
   echo ""
   echo "配置文件位于 $name.txt 中"
   cat >./$name.txt <<EOF
 tg://proxy?server=$ip&port=$port&secret=$secret
 EOF
-
 elif [ "$1" = "n" ]; then
   echo ""
   echo "######################################"
@@ -116,11 +116,11 @@ elif [ "$1" = "n" ]; then
     tag=''
     echo "不使用tag"
   fi
-  read -p "请设置容器名称（默认为 nginx_mtg）" DNAME
+  read -p "请设置容器名称（默认为 n_mtg）" DNAME
   if [[ -n $DNAME ]]; then
     name=$DNAME
   else
-    name="nginx_mtg"
+    name="n_mtg"
   fi
   echo "容器名称为 $name"
   echo ""
@@ -130,9 +130,12 @@ elif [ "$1" = "n" ]; then
   docker pull ellermister/nginx-mtproxy
   docker run --name $name -d -e secret="$secret" -e domain="$domain" -e tag="$tag" -e ip_white_list=$white -p $port1:80 -p $port2:443 ellermister/nginx-mtproxy:latest
   if [[ "$WHITE" =~ y|Y ]]; then
+    echo ""
     echo "请在搭建完成后访问 http://$ip:$port1/add.php 将ip加入白名单中"
   fi
+  echo ""
   echo "查看连接信息：docker logs $name"
+  echo ""
 elif [ "$1" = "g" ]; then
   echo ""
   echo "######################################"
@@ -173,11 +176,11 @@ elif [ "$1" = "g" ]; then
   fi
   echo "伪装访问网址为 $domain"
   echo ""
-  read -p "请设置容器名称（默认为 mtg）" DNAME
+  read -p "请设置容器名称（默认为 g_mtg）" DNAME
   if [[ -n $DNAME ]]; then
     name=$DNAME
   else
-    name="mtg"
+    name="g_mtg"
   fi
   echo "容器名称为 $name"
   echo ""
@@ -189,8 +192,11 @@ EOF
   docker stop $name
   docker rm -f $name
   docker run -d --name $name -v /etc/mtg.toml:/config.toml -p $port:$ports --restart=always nineseconds/mtg:master
+
+  echo ""
+  echo "配置文件位于 $name.txt 中"
   cat >./$name.txt <<EOF
-tg://proxy?server=$ip&port=$port2&secret=$secrt
+tg://proxy?server=$ip&port=$port&secret=$secret
 EOF
   echo ""
   echo "tg://proxy?server=$ip&port=$port&secret=$secret"
@@ -240,11 +246,11 @@ elif [ "$1" = "s" ]; then
   fi
   echo "认证密码为 $pass"
   echo ""
-  read -p "请设置容器名称（默认为 socks5）" DNAME
+  read -p "请设置容器名称（默认为 s_proxy）" DNAME
   if [[ -n $DNAME ]]; then
     name=$DNAME
   else
-    name="socks5"
+    name="s_proxy"
   fi
   echo "容器名称为 $name"
   echo ""
@@ -253,6 +259,8 @@ elif [ "$1" = "s" ]; then
   docker run -dit -p $port:$ports --name $name --restart=always nadoo/glider -verbose -listen $user:$pass@:$ports
   echo ""
   echo "tg://socks?server=$ip&port=$port&user=$user&pass=$pass"
+  echo "配置文件位于 $name.txt 中"
+  echo ""
   cat >./$name.txt <<EOF
 tg://socks?server=$ip&port=$port&user=$user&pass=$pass
 EOF
@@ -260,12 +268,16 @@ elif [ "$1" = "stop" ]; then
   docker stop $(docker ps -aq)
 elif [ "$1" = "del" ]; then
   docker rm $(docker ps -aq)
+elif [ "$1" = "delete" ]; then
+  docker stop $(docker ps -aq)
+  docker rm $(docker ps -aq)
 else
-  echo "安装docker：d"
   echo "安装GO_MTPROTO：g"
-  echo "安装tg官方MTPROTO：t"
-  echo "安装nginx_MTPROTO：n"
   echo "安装SOCKS5：s"
   echo "停止全部容器：stop"
   echo "删除全部容器：del"
+  echo "停止删除全部：delete"
+  echo "安装docker：d"
+  echo "安装tg官方MTPROTO：t"
+  echo "安装nginx_MTPROTO：n"
 fi
