@@ -93,11 +93,10 @@ class SslHelper {
     /**
      * acme使用dns申请命令
      * @param string $domain 域名列表
-     * @param string $all 泛域名
      * @param string $option 选项
      * @return string
      */
-    public static function acmeDnsApply(string $domain, string $all = '', string $option = "--dns dns_gd"): string {
+    public static function acmeDnsApply(string $domain, string $option = "--dns dns_gd"): string {
         return "acme.sh --issue {$domain} --force --debug 2" . (!empty($option) ? (" " . $option) : "");
     }
 
@@ -175,7 +174,6 @@ class SslHelper {
         $res = openssl_pkey_get_details(openssl_pkey_get_private((@file_get_contents($private))));
         return static::saveFile($public, ($res['key'] ?? ''));
     }
-
 
     /**
      * 通过完整的证书链 获取 证书开始到结束时间

@@ -495,7 +495,7 @@ class Curl {
 
     /**
      * 获取header数组
-     * @param array $arr //包含的名称(不分大小写)
+     * @param array $head 包含的名称(不分大小写)
      * @return array
      */
     public function getHeadArr(array $head = []): array {
