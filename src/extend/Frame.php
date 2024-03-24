@@ -694,42 +694,51 @@ class Frame {
     /**
      * 判断ip列表
      * @param string $ip 要判断的ip
-     * @param array $array 允许ip列表，IP段使用[0-255],全部使用*
+     * @param array $array 允许ip列表
+     * @param bool $type 是否允许IP段，使用[0-255],全部使用*
      * @return bool 允许返回true
      */
-    public static function isIp(string $ip, array $array): bool {
+    public static function isIp(string $ip, array $array, bool $type = true): bool {
         if (!empty($array) && filter_var($ip, FILTER_VALIDATE_IP) !== false) {
             foreach ($array as $v) {
-                if (!empty($v) && ($ip == $v || in_array($v, ['*', '*.*.*.*']))) {
-                    return true;
+                if (!empty($v)) {
+                    if ($ip == $v) {
+                        return true;
+                    } else if ($type === true) {
+                        if (!empty(in_array($v, ['*', '*.*.*.*']))) {
+                            return true;
+                        }
+                    }
                 }
             }
-            $arrIp = explode('.', $ip);
-            foreach ($array as $v) {
-                if (str_contains($v, ".")) {
-                    $ifIp = $arrIp;
-                    $arr = explode('.', $v);
-                    if (str_contains($v, "*") || (str_contains($v, "[") && str_contains($v, "]"))) {
-                        foreach ($arr as $key => $val) {
-                            if (isset($ifIp[$key])) {
-                                if ($val == '*') {
-                                    $ifIp[$key] = $val;
-                                } else if (str_starts_with($val, '[') && str_ends_with($val, ']')) {
-                                    $ipVal = $ifIp[$key];
-                                    $arrA = explode('[', $val);
-                                    $arrB = explode(']', ($arrA[1] ?? ''));
-                                    $arrC = explode('-', ($arrB[0] ?? ''));
-                                    $min = $arrC[0] ?? 0;
-                                    $max = $arrC[1] ?? 255;
-                                    if ($ipVal >= $min && $ipVal <= $max) {
+            if ($type === true) {
+                $arrIp = explode('.', $ip);
+                foreach ($array as $v) {
+                    if (str_contains($v, ".")) {
+                        $ifIp = $arrIp;
+                        $arr = explode('.', $v);
+                        if (str_contains($v, "*") || (str_contains($v, "[") && str_contains($v, "]"))) {
+                            foreach ($arr as $key => $val) {
+                                if (isset($ifIp[$key])) {
+                                    if ($val == '*') {
                                         $ifIp[$key] = $val;
+                                    } else if (str_starts_with($val, '[') && str_ends_with($val, ']')) {
+                                        $ipVal = $ifIp[$key];
+                                        $arrA = explode('[', $val);
+                                        $arrB = explode(']', ($arrA[1] ?? ''));
+                                        $arrC = explode('-', ($arrB[0] ?? ''));
+                                        $min = $arrC[0] ?? 0;
+                                        $max = $arrC[1] ?? 255;
+                                        if ($ipVal >= $min && $ipVal <= $max) {
+                                            $ifIp[$key] = $val;
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    if (join('.', $ifIp) == $v) {
-                        return true;
+                        if (join('.', $ifIp) == $v) {
+                            return true;
+                        }
                     }
                 }
             }
