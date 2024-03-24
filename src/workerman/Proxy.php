@@ -57,7 +57,7 @@ class Proxy {
     public static function set($port, $proxy, $file, $user = '', $pass = '') {
         self::$ipFile = !empty($file) ? $file : __DIR__ . '/ip.cache';
         if (empty(is_file(self::$ipFile))) {
-            @file_put_contents(self::$ipFile, "#白名单列表,IP段使用*号,一行一个记录\r\n");
+            @file_put_contents(self::$ipFile, "#白名单列表,IP段使用*号或者[0-255],一行一个记录\r\n");
         }
         $self = new self($port, $user, $pass);
         $self->exec($proxy);
@@ -75,6 +75,7 @@ class Proxy {
             $path = ('/' . ltrim(trim($path), '/'));
             if (substr(trim($req->uri()), 0, strlen($path)) == $path) {
                 if (!empty($ip = $con->getRemoteIp())) {
+                    $iv = 0;
                     self::createFilePath(self::$ipFile);
                     $body = @file_get_contents(self::$ipFile) ?: '';
                     $body = str_replace("\r\n", PHP_EOL, $body);
@@ -88,9 +89,10 @@ class Proxy {
                         }
                     }
                     if (empty($bool)) {
+                        ++$iv;
                         $array[] = $anyIp;
                     }
-                    if (!empty($ipaddress = $req->get('ip'))) {
+                    if (!empty($ipaddress = $req->get('ip')) && empty(in_array($ipaddress, ['*', '*.*.*.*']))) {
                         $bool = false;
                         foreach ($array as $v) {
                             if ($ipaddress == $v) {
@@ -99,12 +101,13 @@ class Proxy {
                             }
                         }
                         if (empty($bool)) {
+                            ++$iv;
                             $array[] = $ipaddress;
                         }
                     }
                     $put = @file_put_contents(self::$ipFile, trim(join("\r\n", $array), "\r\n"));
                     if ($put > 0) {
-                        $con->send('success');
+                        $con->send('success(' . $iv . ')');
                         return;
                     }
                 }
