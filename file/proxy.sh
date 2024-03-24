@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [ "$1" = "d" ]; then
   sudo apt-get install docker docker-compose docker-ce docker-ce-cli containerd.io -y
 elif [ "$1" = "t" ]; then

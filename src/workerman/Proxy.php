@@ -4,10 +4,12 @@ namespace zhqing\workerman;
 
 use Workerman\Connection\AsyncTcpConnection;
 use Workerman\Connection\AsyncUdpConnection;
+use Workerman\Connection\TcpConnection;
+use Workerman\Protocols\Http\Request;
 use Workerman\Worker;
 use Workerman\Timer;
 
-ini_set("memory_limit", "512M");
+ini_set("memory_limit", "1024M");
 define('STAGE_INIT', 0);
 define('STAGE_AUTH', 1);
 define('STAGE_ADDR', 2);
@@ -39,72 +41,120 @@ define('METHOD_NO_AUTH', 0);
 define('METHOD_GSSAPI', 1);
 define('METHOD_USER_PASS', 2);
 
-/**
- * 开放代理ip
- */
-class ProxyIp {
+class Proxy {
 
-    protected static array $config = [];
+    protected $config = [];
+    protected static $ipFile;
 
     /**
-     * 单个启动
-     * @param string|int $port //外部端口
-     * @param string|int $proxy //内部端口
-     * @param string $user //帐号
-     * @param string $pass //密码
+     * Proxy::set(7550, 29365, __DIR__ . '/ip.txt')->http(7999, '6bf07b0c3685894420cdc1a34efebd8e')->start();
+     * @param $port //外部端口
+     * @param $proxy //内部端口
+     * @param $file //保存文件
+     * @param $user //帐号
+     * @param $pass //密码
      */
-    public static function start(string|int $port, string|int $proxy, string $user, string $pass) {
+    public static function set($port, $proxy, $file, $user = '', $pass = '') {
+        self::$ipFile = !empty($file) ? $file : __DIR__ . '/ip.cache';
+        if (empty(is_file(self::$ipFile))) {
+            @file_put_contents(self::$ipFile, "#白名单列表,IP段使用*号,一行一个记录\r\n");
+        }
         $self = new self($port, $user, $pass);
         $self->exec($proxy);
+        return $self;
     }
 
     /**
-     * 批量启动
-     * @param int $tcp //外网起始端口
-     * @param int $upd //内网起始端口
-     * @param int $number //启动数量
-     * @param $user //帐号
-     * @param $pass //密码
+     * @param $proxy //启动端口
+     * @param $path //访问路径+参数
      */
-    public static function run(int $tcp, int $upd, int $number, string $user, string $pass) {
-        for ($i = 1; $i <= $number; $i++) {
-            self::start($tcp + $i, $upd + $i, $user, $pass);
-        }
+    public function http($proxy, $path) {
+        $worker = new Worker('http://0.0.0.0:' . $proxy);
+        $worker->count = 10;
+        $worker->onMessage = function (TcpConnection $con, Request $req) use ($path) {
+            $path = ('/' . ltrim(trim($path), '/'));
+            if (substr(trim($req->uri()), 0, strlen($path)) == $path) {
+                if (!empty($ip = $con->getRemoteIp())) {
+                    self::createFilePath(self::$ipFile);
+                    $body = @file_get_contents(self::$ipFile) ?: '';
+                    $body = str_replace("\r\n", PHP_EOL, $body);
+                    $array = explode(PHP_EOL, trim($body, PHP_EOL));
+                    $anyIp = trim($ip);
+                    $bool = false;
+                    foreach ($array as $v) {
+                        if ($anyIp == $v) {
+                            $bool = true;
+                            break;
+                        }
+                    }
+                    if (empty($bool)) {
+                        $array[] = $anyIp;
+                    }
+                    if (!empty($ipaddress = $req->get('ip'))) {
+                        $bool = false;
+                        foreach ($array as $v) {
+                            if ($ipaddress == $v) {
+                                $bool = true;
+                                break;
+                            }
+                        }
+                        if (empty($bool)) {
+                            $array[] = $ipaddress;
+                        }
+                    }
+                    $put = @file_put_contents(self::$ipFile, trim(join("\r\n", $array), "\r\n"));
+                    if ($put > 0) {
+                        $con->send('success');
+                        return;
+                    }
+                }
+            }
+            $con->send('error');
+        };
+        return $this;
+    }
+
+    public function start() {
         Worker::runAll();
     }
 
-    /**
-     * 批量启动2
-     * @param array $array //外网起始端口
-     * @param $user //帐号
-     * @param $pass //密码
-     */
-    public static function arr(array $array, string $user = '', string $pass = '') {
-        foreach ($array as $v) {
-            self::start($v['tcp'], $v['upd'], ($v['user'] ?? $user), ($v['pass'] ?? $pass));
-
-        }
-        Worker::runAll();
+    public function __construct($port, $user, $pass) {
+        $this->config = [
+            "auth" => [
+                METHOD_NO_AUTH => true,
+                METHOD_USER_PASS => function ($request) use ($user, $pass) {
+                    if (!empty($user) && !empty($pass)) {
+                        return $request['user'] == $user && $request['pass'] == $pass;
+                    }
+                    return true;
+                }
+            ],
+            "tcp_port" => $port,
+            "udp_port" => 0,
+            "wanIP" => '0.0.0.0',
+        ];
     }
 
     protected function exec($proxy) {
-        if (count(self::$config['auth']) == 0) {
-            self::$config['auth'] = [METHOD_NO_AUTH => true];
+        if (count($this->config['auth']) == 0) {
+            $this->config['auth'] = [METHOD_NO_AUTH => true];
         }
-        $worker = new Worker('tcp://0.0.0.0:' . self::$config['tcp_port']);
+        $worker = new Worker('tcp://0.0.0.0:' . $this->config['tcp_port']);
+        $worker->count = 100;
         $worker->onConnect = function ($connection) {
             $connection->stage = STAGE_INIT;
             $connection->auth_type = NULL;
         };
         $worker->onMessage = function ($connection, $buffer) {
+            if (empty(self::getAnyIp($connection->getRemoteIp()))) {
+                $connection->close();
+                return;
+            }
             self::logger(LOG_DEBUG, "recv:" . bin2hex($buffer));
             switch ($connection->stage) {
-                // 初始化环节
                 case STAGE_INIT:
                     $request = [];
-                    // 当前偏移量
                     $offset = 0;
-                    // 检测buffer长度
                     if (strlen($buffer) < 2) {
                         self::logger(LOG_ERR, "init socks5 failed. buffer too short.");
                         $connection->send("\x05\xff");
@@ -112,10 +162,8 @@ class ProxyIp {
                         $connection->close();
                         return;
                     }
-                    // Socks5 版本
                     $request['ver'] = ord($buffer[$offset]);
                     $offset += 1;
-                    // 认证方法数量
                     $request['method_count'] = ord($buffer[$offset]);
                     $offset += 1;
                     if (strlen($buffer) < 2 + $request['method_count']) {
@@ -125,13 +173,12 @@ class ProxyIp {
                         $connection->close();
                         return;
                     }
-                    // 客户端支持的认证方法
                     $request['methods'] = [];
                     for ($i = 1; $i <= $request['method_count']; $i++) {
                         $request['methods'][] = ord($buffer[$offset]);
                         $offset++;
                     }
-                    foreach (self::$config['auth'] as $k => $v) {
+                    foreach ($this->config['auth'] as $k => $v) {
                         if (in_array($k, $request['methods'])) {
                             self::logger(LOG_INFO, "auth client via method $k");
                             self::logger(LOG_DEBUG, "send:" . bin2hex("\x05" . chr($k)));
@@ -153,10 +200,8 @@ class ProxyIp {
                         $connection->close();
                     }
                     return;
-                // 认证环节
                 case STAGE_AUTH:
                     $request = [];
-                    // 当前偏移量
                     $offset = 0;
                     if (strlen($buffer) < 5) {
                         self::logger(LOG_ERR, "auth failed. buffer too short.");
@@ -165,13 +210,10 @@ class ProxyIp {
                         $connection->close();
                         return;
                     }
-                    // var_dump($connection->auth_type);
                     switch ($connection->auth_type) {
                         case METHOD_USER_PASS:
-                            //  子协议 协商 版本
                             $request['sub_ver'] = ord($buffer[$offset]);
                             $offset += 1;
-                            // 用户名
                             $request['user_len'] = ord($buffer[$offset]);
                             $offset += 1;
                             if (strlen($buffer) < 2 + $request['user_len'] + 2) {
@@ -183,7 +225,6 @@ class ProxyIp {
                             }
                             $request['user'] = substr($buffer, $offset, $request['user_len']);
                             $offset += $request['user_len'];
-                            // 密码
                             $request['pass_len'] = ord($buffer[$offset]);
                             $offset += 1;
                             if (strlen($buffer) < 2 + $request['user_len'] + 1 + $request['pass_len']) {
@@ -195,7 +236,7 @@ class ProxyIp {
                             }
                             $request['pass'] = substr($buffer, $offset, $request['pass_len']);
                             $offset += $request['pass_len'];
-                            if ((self::$config["auth"][METHOD_USER_PASS])($request)) {
+                            if (($this->config["auth"][METHOD_USER_PASS])($request)) {
                                 self::logger(LOG_INFO, "auth ok");
                                 $connection->send("\x01\x00");
                                 $connection->stage = STAGE_ADDR;
@@ -216,7 +257,6 @@ class ProxyIp {
                     return;
                 case STAGE_ADDR:
                     $request = [];
-                    // 当前偏移量
                     $offset = 0;
                     if (strlen($buffer) < 4) {
                         self::logger(LOG_ERR, "connect init failed. buffer too short.");
@@ -231,19 +271,14 @@ class ProxyIp {
                         $connection->close(self::packResponse($response));
                         return;
                     }
-                    // Socks 版本
                     $request['ver'] = ord($buffer[$offset]);
                     $offset += 1;
-                    // 命令
                     $request['command'] = ord($buffer[$offset]);
                     $offset += 1;
-                    // RSV
                     $request['rsv'] = ord($buffer[$offset]);
                     $offset += 1;
-                    // AddressType
                     $request['addr_type'] = ord($buffer[$offset]);
                     $offset += 1;
-                    // DestAddr
                     switch ($request['addr_type']) {
                         case ADDRTYPE_IPV4:
                             if (strlen($buffer) < 4 + 4) {
@@ -256,14 +291,12 @@ class ProxyIp {
                                 $response['addr_type'] = ADDRTYPE_IPV4;
                                 $response['bind_addr'] = '0.0.0.0';
                                 $response['bind_port'] = 0;
-
                                 $connection->close(self::packResponse($response));
                                 return;
                             }
                             $tmp = substr($buffer, $offset, 4);
                             $ip = 0;
                             for ($i = 0; $i < 4; $i++) {
-                                // var_dump(ord($tmp[$i]));
                                 $ip += ord($tmp[$i]) * pow(256, 3 - $i);
                             }
                             $request['dest_addr'] = long2ip($ip);
@@ -288,7 +321,6 @@ class ProxyIp {
                             $request['dest_addr'] = substr($buffer, $offset, $request['host_len']);
                             $offset += $request['host_len'];
                             break;
-
                         case ADDRTYPE_IPV6:
                         default:
                             self::logger(LOG_ERR, "unsupport ipv6. [ADDRTYPE_IPV6].");
@@ -302,9 +334,7 @@ class ProxyIp {
                             $response['bind_port'] = 0;
                             $connection->close(self::packResponse($response));
                             return;
-                            break;
                     }
-                    // DestPort
                     if (strlen($buffer) < $offset + 2) {
                         self::logger(LOG_ERR, "connect init failed.[port] buffer too short.");
                         $connection->stage = STAGE_DESTROYED;
@@ -321,7 +351,6 @@ class ProxyIp {
                     $portData = unpack("n", substr($buffer, $offset, 2));
                     $request['dest_port'] = $portData[1];
                     $offset += 2;
-                    // var_dump($request);
                     switch ($request['command']) {
                         case CMD_CONNECT:
                             self::logger(LOG_DEBUG, 'tcp://' . $request['dest_addr'] . ':' . $request['dest_port']);
@@ -371,8 +400,8 @@ class ProxyIp {
                             break;
                         case CMD_UDP_ASSOCIATE:
                             $connection->stage = STAGE_UDP_ASSOC;
-                            var_dump("CMD_UDP_ASSOCIATE " . self::$config['udp_port']);
-                            if (self::$config['udp_port'] == 0) {
+                            var_dump("CMD_UDP_ASSOCIATE " . $this->config['udp_port']);
+                            if ($this->config['udp_port'] == 0) {
                                 $connection->udpWorker = new Worker('udp://0.0.0.0:0');
                                 $connection->udpWorker->incId = 0;
                                 $connection->udpWorker->onMessage = function ($udp_connection, $data) use ($connection) {
@@ -382,9 +411,9 @@ class ProxyIp {
                                 $listenInfo = stream_socket_get_name($connection->udpWorker->getMainSocket(), false);
                                 list($bind_addr, $bind_port) = explode(":", $listenInfo);
                             } else {
-                                $bind_port = self::$config['udp_port'];
+                                $bind_port = $this->config['udp_port'];
                             }
-                            $bind_addr = self::$config['wanIP'];
+                            $bind_addr = $this->config['wanIP'];
                             $response['ver'] = 5;
                             $response['rep'] = 0;
                             $response['rsv'] = 0;
@@ -406,15 +435,14 @@ class ProxyIp {
                             $response['bind_port'] = 0;
                             $connection->close(self::packResponse($response));
                             return;
-                            break;
                     }
             }
         };
         $worker->onClose = function ($connection) {
             self::logger(LOG_INFO, "client closed.");
         };
-
         $udpWorker = new Worker('udp://0.0.0.0:' . $proxy);
+        $udpWorker->count = 100;
         $udpWorker->incId = 0;
         $udpWorker->onWorkerStart = function ($worker) {
             $worker->udpConnections = [];
@@ -428,7 +456,6 @@ class ProxyIp {
                 }
             });
         };
-
         $udpWorker->onMessage = 'self::udpWorkerOnMessage';
     }
 
@@ -496,7 +523,6 @@ class ProxyIp {
         $portData = unpack("n", substr($data, $offset, 2));
         $request['dest_port'] = $portData[1];
         $offset += 2;
-        // var_dump($request['dest_addr']);
         if ($request['addr_type'] == ADDRTYPE_HOST) {
             self::logger(LOG_DEBUG, '解析DNS');
             $addr = dns_get_record($request['dest_addr'], DNS_A);
@@ -505,8 +531,6 @@ class ProxyIp {
         } else {
             $addr['ip'] = $request['dest_addr'];
         }
-        // var_dump($request);
-        // var_dump($udp_connection);
         $remote_connection = new AsyncUdpConnection('udp://' . $addr['ip'] . ':' . $request['dest_port']);
         $remote_connection->id = $worker->incId++;
         $remote_connection->udp_connection = $udp_connection;
@@ -524,23 +548,66 @@ class ProxyIp {
     }
 
     protected static function logger($level, $str) {
-        if (self::$config['log_level'] >= $level) {
-            echo $str . "\n";
+        if (LOG_DEBUG >= $level) {
+            echo "";
         }
     }
 
-    public function __construct($port, $user, $pass) {
-        self::$config = [
-            "auth" => [
-                METHOD_NO_AUTH => true,
-                METHOD_USER_PASS => function ($request) use ($user, $pass) {
-                    return $request['user'] == $user && $request['pass'] == $pass;
+    protected static function getAnyIp($ip) {
+        $body = @file_get_contents(self::$ipFile) ?: '';
+        if (!empty($body)) {
+            $body = str_replace("\r\n", PHP_EOL, $body);
+            $array = explode(PHP_EOL, trim($body, PHP_EOL));
+            return self::isIp($ip, $array);
+        }
+        return false;
+    }
+
+    protected static function isIp($ip, $array) {
+        if (!empty($array) && filter_var($ip, FILTER_VALIDATE_IP) !== false) {
+            foreach ($array as $v) {
+                if (!empty($v) && ($ip == $v || in_array($v, ['*', '*.*.*.*']))) {
+                    return true;
                 }
-            ],
-            "log_level" => LOG_DEBUG,
-            "tcp_port" => $port,
-            "udp_port" => 0,
-            "wanIP" => '127.0.0.1',
-        ];
+            }
+            $arrIp = explode('.', $ip);
+            foreach ($array as $v) {
+                if (str_contains($v, ".")) {
+                    $ifIp = $arrIp;
+                    $arr = explode('.', $v);
+                    if (str_contains($v, "*") || (str_contains($v, "[") && str_contains($v, "]"))) {
+                        foreach ($arr as $key => $val) {
+                            if (isset($ifIp[$key])) {
+                                if ($val == '*') {
+                                    $ifIp[$key] = $val;
+                                } else if (str_starts_with($val, '[') && str_ends_with($val, ']')) {
+                                    $ipVal = $ifIp[$key];
+                                    $arrA = explode('[', $val);
+                                    $arrB = explode(']', ($arrA[1] ?? ''));
+                                    $arrC = explode('-', ($arrB[0] ?? ''));
+                                    $min = $arrC[0] ?? 0;
+                                    $max = $arrC[1] ?? 255;
+                                    if ($ipVal >= $min && $ipVal <= $max) {
+                                        $ifIp[$key] = $val;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (join('.', $ifIp) == $v) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    protected static function createFilePath($filePath) {
+        $path = dirname($filePath);
+        if (empty(is_dir($path))) {
+            mkdir($path, 0777, true);
+        }
+        return $filePath;
     }
 }
