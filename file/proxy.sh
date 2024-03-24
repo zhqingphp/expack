@@ -1,3 +1,4 @@
+#!/bin/bash
 if [ "$1" = "d" ]; then
   sudo apt-get install docker docker-compose docker-ce docker-ce-cli containerd.io -y
 elif [ "$1" = "t" ]; then
@@ -44,7 +45,7 @@ elif [ "$1" = "t" ]; then
   docker pull telegrammessenger/proxy
   docker run -d -p$port:443 --name=$name --restart=always -v proxy-config:/data -e SECRET=$secret telegrammessenger/proxy:latest
   echo ""
-  echo "链接为 tg://proxy?server=$ip&port=$port&secret=$secret"
+  echo "tg://proxy?server=$ip&port=$port&secret=$secret"
   echo ""
   echo "配置文件位于 $name.txt 中"
   cat >./$name.txt <<EOF
