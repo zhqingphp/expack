@@ -21,6 +21,86 @@ class Frame {
     use Acme, File, Upload, Browser, Arrays, Decompression, Mime, Wait, Sort, Xml, Tool, NewWay, Date, Mysql;
 
     /**
+     * array 每隔 i 个分一个array
+     * @param array $array 要分隔的array
+     * @param int|array $i int隔几个,array设置每行几个[3,3,2,2]
+     * @param callable|null $callable 分隔时处理数据
+     * @param array $data
+     * @param array $line
+     * @return array
+     */
+    public static function arrayLine(array $array, int|array $i, callable|null $callable = null, array $data = [], array $line = []): array {
+        $callable = (!empty($callable) && is_callable($callable) ? $callable : function ($v) {
+            return $v;
+        });
+        $j = 0;
+        foreach ($array as $k => $v) {
+            $line[] = $callable($v, $k);
+            if (count($line) == (is_array($i) ? ($i[$j] ?? 1) : $i)) {
+                ++$j;
+                $data[] = $line;
+                $line = [];
+            }
+        }
+        return array_merge($data, (!empty($line) ? [$line] : []));
+    }
+
+    /**
+     * 判断ip列表
+     * @param string $ip 要判断的ip
+     * @param array $array 允许ip列表
+     * @param bool $type 是否允许IP段，使用[0-255],全部使用*
+     * @return bool 允许返回true
+     */
+    public static function isIp(string $ip, array $array, bool $type = true): bool {
+        if (!empty($array) && filter_var($ip, FILTER_VALIDATE_IP) !== false) {
+            foreach ($array as $v) {
+                if (!empty($v)) {
+                    if ($ip == $v) {
+                        return true;
+                    } else if ($type === true) {
+                        if (!empty(in_array($v, ['*', '*.*.*.*']))) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            if ($type === true) {
+                $arrIp = explode('.', $ip);
+                foreach ($array as $v) {
+                    if (str_contains($v, ".")) {
+                        $ifIp = $arrIp;
+                        $arr = explode('.', $v);
+                        if (str_contains($v, "*") || (str_contains($v, "[") && str_contains($v, "]"))) {
+                            foreach ($arr as $key => $val) {
+                                if (isset($ifIp[$key])) {
+                                    if ($val == '*') {
+                                        $ifIp[$key] = $val;
+                                    } else if (str_starts_with($val, '[') && str_ends_with($val, ']')) {
+                                        $ipVal = $ifIp[$key];
+                                        $arrA = explode('[', $val);
+                                        $arrB = explode(']', ($arrA[1] ?? ''));
+                                        $arrC = explode('-', ($arrB[0] ?? ''));
+                                        $min = $arrC[0] ?? 0;
+                                        $max = $arrC[1] ?? 255;
+                                        if ($ipVal >= $min && $ipVal <= $max) {
+                                            $ifIp[$key] = $val;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (join('.', $ifIp) == $v) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * 修改url中的get参数
      * @param string $url
      * @param array $arr //要设置的get
@@ -689,60 +769,5 @@ class Frame {
                 return false;
             }
         }
-    }
-
-    /**
-     * 判断ip列表
-     * @param string $ip 要判断的ip
-     * @param array $array 允许ip列表
-     * @param bool $type 是否允许IP段，使用[0-255],全部使用*
-     * @return bool 允许返回true
-     */
-    public static function isIp(string $ip, array $array, bool $type = true): bool {
-        if (!empty($array) && filter_var($ip, FILTER_VALIDATE_IP) !== false) {
-            foreach ($array as $v) {
-                if (!empty($v)) {
-                    if ($ip == $v) {
-                        return true;
-                    } else if ($type === true) {
-                        if (!empty(in_array($v, ['*', '*.*.*.*']))) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            if ($type === true) {
-                $arrIp = explode('.', $ip);
-                foreach ($array as $v) {
-                    if (str_contains($v, ".")) {
-                        $ifIp = $arrIp;
-                        $arr = explode('.', $v);
-                        if (str_contains($v, "*") || (str_contains($v, "[") && str_contains($v, "]"))) {
-                            foreach ($arr as $key => $val) {
-                                if (isset($ifIp[$key])) {
-                                    if ($val == '*') {
-                                        $ifIp[$key] = $val;
-                                    } else if (str_starts_with($val, '[') && str_ends_with($val, ']')) {
-                                        $ipVal = $ifIp[$key];
-                                        $arrA = explode('[', $val);
-                                        $arrB = explode(']', ($arrA[1] ?? ''));
-                                        $arrC = explode('-', ($arrB[0] ?? ''));
-                                        $min = $arrC[0] ?? 0;
-                                        $max = $arrC[1] ?? 255;
-                                        if ($ipVal >= $min && $ipVal <= $max) {
-                                            $ifIp[$key] = $val;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (join('.', $ifIp) == $v) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
     }
 }
